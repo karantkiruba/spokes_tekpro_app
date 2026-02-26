@@ -1,0 +1,71 @@
+{
+ "add_total_row": 1,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2024-09-02 15:07:07.934214",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-11-25 10:53:06.624363",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "TMS REPORT",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select \r\nC.name as \"Customer:Link/Customer:200\",\r\nC.customer_name as \"Customer Name:Data:200\",\r\nC.customer_group as \"Customer Group:Data:200\",\r\nCOALESCE((Select Sum(SI.total) from `tabSales Invoice` SI where C.name = SI.customer and SI.docstatus = 1 and (DATE(SI.posting_date) BETWEEN %(from_date)s AND %(to_date)s)),0) as \"Sales Value:Data:200\",\r\nCOALESCE((Select Sum(DCI.qty * I.last_purchase_rate)\r\nfrom `tabDelivery Note` DC \r\ninner join `tabDelivery Note Item` DCI on DC.name = DCI.parent\r\nleft outer join `tabItem` I ON I.name = CASE \r\n                                      WHEN DCI.item_code LIKE '%%-F' THEN REPLACE(DCI.item_code, '-F', '-S')\r\n                                      ELSE DCI.item_code \r\n                                    END\r\nwhere C.name = DC.customer  and DC.docstatus = 1 and (DATE(DC.posting_date) BETWEEN %(from_date)s AND %(to_date)s)),0) as \"DC Value:Data:200\"\r\n  \r\nfrom\r\n`tabCustomer` C where C.customer_group like \"%%TMS%%\" and C.customer_group = %(customer_group)s\r\n Group by C.name",
+ "ref_doctype": "Sales Invoice",
+ "report_name": "TMS REPORT",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Employee Self Service"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Engineer SKYTEC"
+  },
+  {
+   "role": "DC Engineer"
+  }
+ ],
+ "timeout": 0
+}

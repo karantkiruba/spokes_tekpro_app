@@ -1,0 +1,55 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2026-01-28 17:52:26.537291",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": null,
+ "modified": "2026-01-29 12:19:46.488124",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Tool Performance",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    tp.name AS \"ID:Link/Tool Performance:120\",\r\n    tp.customer_name AS \"Customer:Data:180\",\r\n    tp.engineer_name AS \"Engineer:Data:180\",\r\n    t.tool_label AS \"Trial details:Data:180\",\r\n\r\n    MAX(CASE WHEN td.parameter_name = 'HOLDER/CUTTER SPECIFICATION' THEN t.value END) AS \"HOLDER/CUTTER SPECIFICATION:Data:180\",\r\n    MAX(CASE WHEN td.parameter_name = 'UNIT PRICE' THEN t.value END) AS \"UNIT PRICE:Currency:120\",\r\n    MAX(CASE WHEN td.parameter_name = 'CUTTING SPEED(M/MIN)' THEN t.value END) AS \"CUTTING SPEED(M/MIN):Float:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'MATERIAL' THEN t.value END) AS \"MATERIAL:Data:100\",\r\n    MAX(CASE WHEN td.parameter_name = 'MONTHLY QTY(In Nos)' THEN t.value END) AS \"MONTHLY QTY(In Nos):Int:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'TOOL SPECIFICATION' THEN t.value END) AS \"TOOL SPECIFICATION:Data:220\",\r\n    MAX(CASE WHEN td.parameter_name = 'SPINDLE SPEED(RPM)' THEN t.value END) AS \"SPINDLE SPEED(RPM):Int:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'CYCLE TIME (In seconds)' THEN t.value END) AS \"CYCLE TIME (In seconds):Int:180\",\r\n    MAX(CASE WHEN td.parameter_name = 'DEPTH OF CUT(MM)' THEN t.value END) AS \"DEPTH OF CUT(MM):Float:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'NO. OF PASS' THEN t.value END) AS \"NO. OF PASS:Int:140\",\r\n    MAX(CASE WHEN td.parameter_name = 'NO OF CORNER (n)' THEN t.value END) AS \"NO OF CORNER (n):Int:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'LIFE PER CORNER (In Nos)' THEN t.value END) AS \"LIFE PER CORNER (In Nos):Int:180\",\r\n    MAX(CASE WHEN td.parameter_name = 'COST PER COMPONENT (In INR)' THEN t.value END) AS \"COST PER COMPONENT (In INR):Currency:200\",\r\n    MAX(CASE WHEN td.parameter_name = 'Monthly Value' THEN t.value END) AS \"Monthly Value:Currency:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'NO OF POCKET (Z)' THEN t.value END) AS \"NO OF POCKET (Z):Int:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'FEED' THEN t.value END) AS \"FEED:Float:120\",\r\n    MAX(CASE WHEN td.parameter_name = 'TOOL SUPPLIER' THEN t.value END) AS \"TOOL SUPPLIER:Data:160\",\r\n    MAX(CASE WHEN td.parameter_name = 'OPERATION' THEN t.value END) AS \"OPERATION:Data:140\"\r\n\r\nFROM\r\n    `tabTool Performance` tp\r\nJOIN\r\n    `tabTrial Details` td ON td.parent = tp.name\r\n\r\nJOIN (\r\n    SELECT parent, 'COMPETITOR TOOL' AS tool_label, parameter_name, competitor_tool AS value\r\n    FROM `tabTrial Details`\r\n    UNION ALL\r\n    SELECT parent, 'OUR TOOL' AS tool_label, parameter_name, our_tool AS value\r\n    FROM `tabTrial Details`\r\n) t ON t.parent = tp.name AND t.parameter_name = td.parameter_name\r\n\r\nWHERE\r\n    tp.docstatus != 2\r\n    AND tp.trial_date BETWEEN %(from_date)s AND %(to_date)s\r\n    AND tp.company = %(company)s\r\n\r\n\r\n\r\n\r\n\r\nGROUP BY\r\n    tp.name,\r\n    t.tool_label\r\n\r\nORDER BY\r\n    tp.name,\r\n    t.tool_label;\r\n",
+ "ref_doctype": "Tool Performance",
+ "report_name": "Tool Performance",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Tool performance"
+  }
+ ],
+ "timeout": 0
+}

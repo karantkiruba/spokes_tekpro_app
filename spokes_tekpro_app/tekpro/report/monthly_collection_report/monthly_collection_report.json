@@ -1,0 +1,78 @@
+{
+ "add_total_row": 1,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2023-03-08 17:42:56.541320",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Month",
+   "mandatory": 1,
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Select",
+   "label": "Year",
+   "mandatory": 1,
+   "options": "2023\n2024\n2025\n2026",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2026-01-05 10:52:27.142885",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Monthly Collection Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    MCT.year AS 'Year:data:100',\r\n    MCT.month AS 'Month:Data:100',\r\n    MCT.sales_person AS \"Sales Person:Link/Sales Person\",\r\n    MCTD.customer AS \"Customer:Link/Customer:120\",\r\n    MCTD.customer_name AS \"Customer Name:Data:240\",\r\n    MCTD.outstanding_amount as 'Outstanding',\r\n    (\r\n        SELECT IFNULL(SUM(PE.total_allocated_amount), 0) FROM `tabPayment Entry` PE\r\n        WHERE PE.docstatus=1 AND PE.party = MCTD.customer AND PE.payment_type = \"Receive\"\r\n        AND MONTHNAME(PE.posting_date) = MCT.month AND YEAR(PE.posting_date) = MCT.year\r\n    ) +\r\n    \r\n    (\r\n        SELECT IFNULL(SUM(JEA.credit_in_account_currency), 0) FROM `tabJournal Entry` JE\r\n        INNER JOIN `tabJournal Entry Account` JEA ON JE.name = JEA.parent \r\n        WHERE JE.docstatus=1 AND JEA.party = MCTD.customer AND JEA.party_type = \"Customer\"\r\n        AND MONTHNAME(JE.posting_date) = MCT.month AND YEAR(JE.posting_date) = MCT.year \r\n    ) AS \"On Account:Currency:180\",\r\n    MCTD.1st_overdue_amount as '1st Overdue Amount',\r\n    MCTD.30th_overdue_amount as '30th Overdue Amount',\r\n    MCTD.amount AS \"Collection Target Amount:currency:180\",\r\n    (\r\n        SELECT IFNULL(SUM(PE.total_allocated_amount), 0) FROM `tabPayment Entry` PE\r\n        WHERE PE.docstatus=1 AND PE.party = MCTD.customer AND PE.payment_type = \"Receive\"\r\n        AND MONTHNAME(PE.posting_date) = MCT.month AND YEAR(PE.posting_date) = MCT.year\r\n    ) +\r\n    \r\n    (\r\n         SELECT IFNULL(SUM(PE.unallocated_amount), 0) FROM `tabPayment Entry` PE\r\n        WHERE PE.docstatus=1 AND PE.party = MCTD.customer AND PE.payment_type = \"Receive\"\r\n        AND MONTHNAME(PE.posting_date) = MCT.month AND YEAR(PE.posting_date) = MCT.year\r\n    ) +\r\n    (\r\n        SELECT IFNULL(SUM(JEA.credit_in_account_currency), 0) FROM `tabJournal Entry` JE\r\n        INNER JOIN `tabJournal Entry Account` JEA ON JE.name = JEA.parent \r\n        WHERE JE.docstatus=1 AND JEA.party = MCTD.customer AND JEA.party_type = \"Customer\"\r\n        AND MONTHNAME(JE.posting_date) = MCT.month AND YEAR(JE.posting_date) = MCT.year\r\n    ) AS \"Actual Collection Amount:Currency:180\"\r\nFROM\r\n    `tabMonthly Collection Target` AS MCT\r\nINNER JOIN\r\n    `tabMonthly Collection Target Details` AS MCTD ON MCT.name = MCTD.parent\r\nWHERE\r\n    MCT.month = %(month)s AND MCT.year = %(year)s AND MCT.company = %(company)s AND MCT.docstatus = 1\r\nORDER BY\r\n    MCTD.customer_name\r\n",
+ "ref_doctype": "Monthly Collection Target",
+ "report_name": "Monthly Collection Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "Monthly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Monthly collection TGT Engr"
+  },
+  {
+   "role": "Manager"
+  }
+ ],
+ "timeout": 0
+}

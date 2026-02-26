@@ -1,0 +1,36 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2023-03-15 10:26:35.478177",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{\"filters\":[],\"fields\":[[\"name\",\"Yearly Target\"],[\"docstatus\",\"Yearly Target\"],[\"sales_person\",\"Yearly Target\"],[\"branch\",\"Yearly Target\"],[\"division\",\"Yearly Target\"],[\"company\",\"Yearly Target\"],[\"customer\",\"Sales Person Yearly Target Details\"],[\"customer_name\",\"Sales Person Yearly Target Details\"],[\"apr\",\"Sales Person Yearly Target Details\"],[\"may\",\"Sales Person Yearly Target Details\"],[\"jun\",\"Sales Person Yearly Target Details\"],[\"jul\",\"Sales Person Yearly Target Details\"],[\"aug\",\"Sales Person Yearly Target Details\"],[\"sep\",\"Sales Person Yearly Target Details\"],[\"oct\",\"Sales Person Yearly Target Details\"],[\"nov\",\"Sales Person Yearly Target Details\"],[\"dec\",\"Sales Person Yearly Target Details\"],[\"jan\",\"Sales Person Yearly Target Details\"],[\"feb\",\"Sales Person Yearly Target Details\"],[\"mar\",\"Sales Person Yearly Target Details\"],[\"total_amount\",\"Sales Person Yearly Target Details\"]],\"order_by\":\"`tabYearly Target`.`modified` desc\",\"add_totals_row\":true,\"page_length\":500,\"column_widths\":{\"name\":120,\"docstatus\":120,\"sales_person\":120,\"branch\":120,\"division\":120,\"company\":120,\"Sales Person Yearly Target Details:customer\":120,\"Sales Person Yearly Target Details:customer_name\":120,\"Sales Person Yearly Target Details:apr\":120,\"Sales Person Yearly Target Details:may\":120,\"Sales Person Yearly Target Details:jun\":120,\"Sales Person Yearly Target Details:jul\":120,\"Sales Person Yearly Target Details:aug\":120,\"Sales Person Yearly Target Details:sep\":120,\"Sales Person Yearly Target Details:oct\":120,\"Sales Person Yearly Target Details:nov\":120,\"Sales Person Yearly Target Details:dec\":120,\"Sales Person Yearly Target Details:jan\":120,\"Sales Person Yearly Target Details:feb\":120,\"Sales Person Yearly Target Details:mar\":120,\"Sales Person Yearly Target Details:total_amount\":120},\"group_by\":null}",
+ "modified": "2024-03-18 14:50:29.206728",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Yearly Target -Prabu",
+ "owner": "prabu@skytec.co.in",
+ "prepared_report": 0,
+ "ref_doctype": "Yearly Target",
+ "report_name": "Yearly Target -Prabu",
+ "report_type": "Report Builder",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Mgr"
+  },
+  {
+   "role": "Yearly TGT GM"
+  }
+ ]
+}

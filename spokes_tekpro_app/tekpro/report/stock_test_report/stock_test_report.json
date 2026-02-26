@@ -1,0 +1,60 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2023-04-13 15:45:19.382073",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-03-18 14:50:29.142062",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Stock Test Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select\nb.warehouse,\ni.item_code,\ni.description,\nSUM(b.actual_qty),\nwd.rack,\nwd.bin\nfrom `tabBin` b\ninner join `tabItem` i on b.item_code = i.item_code\ninner join `tabWarehouse` w on w.name = b.warehouse\nleft outer join `tabWarehouse Details` wd on wd.parent = i.item_code and wd.warehouse = b.warehouse\nwhere b.actual_qty !=0\ngroup by b.warehouse,i.item_code",
+ "ref_doctype": "Stock Entry",
+ "report_name": "Stock Test Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Manufacturing User"
+  },
+  {
+   "role": "Manufacturing Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  }
+ ]
+}

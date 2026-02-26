@@ -1,0 +1,71 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2024-10-26 17:33:44.170839",
+ "disable_prepared_report": 0,
+ "disabled": 1,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{\"columns\":[{\"label\":\"Date\",\"fieldname\":\"date\",\"fieldtype\":\"Date\",\"width\":90,\"id\":\"date\",\"name\":\"Date\",\"editable\":false},{\"label\":\"Required By\",\"fieldname\":\"required_date\",\"fieldtype\":\"Date\",\"width\":90,\"id\":\"required_date\",\"name\":\"Required By\",\"editable\":false},{\"label\":\"Purchase Order\",\"fieldname\":\"purchase_order\",\"fieldtype\":\"Link\",\"options\":\"Purchase Order\",\"width\":160,\"id\":\"purchase_order\",\"name\":\"Purchase Order\",\"editable\":false,\"compareValue\":null},{\"label\":\"Status\",\"fieldname\":\"status\",\"fieldtype\":\"Data\",\"width\":130,\"id\":\"status\",\"name\":\"Status\",\"editable\":false,\"compareValue\":null},{\"label\":\"Supplier\",\"fieldname\":\"supplier\",\"fieldtype\":\"Link\",\"options\":\"Supplier\",\"width\":130,\"id\":\"supplier\",\"name\":\"Supplier\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"order_type\",\"fieldtype\":\"Select\",\"label\":\"Order Type\",\"insert_after_index\":4,\"link_field\":\"purchase_order\",\"doctype\":\"Purchase Order\",\"options\":\"Trial Order\\nRegular Order\\nRegrind Order\",\"width\":100,\"id\":\"order_type\",\"name\":\"Order Type\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"reference_no\",\"fieldtype\":\"Data\",\"label\":\"Reference No\",\"insert_after_index\":4,\"link_field\":\"purchase_order\",\"doctype\":\"Purchase Order\",\"width\":100,\"id\":\"reference_no\",\"name\":\"Reference No\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"other_references\",\"fieldtype\":\"Data\",\"label\":\"Other References\",\"insert_after_index\":5,\"link_field\":\"purchase_order\",\"doctype\":\"Purchase Order\",\"width\":100,\"id\":\"other_references\",\"name\":\"Other References\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"remarks\",\"fieldtype\":\"Small Text\",\"label\":\"Remarks\",\"insert_after_index\":6,\"link_field\":\"purchase_order\",\"doctype\":\"Purchase Order\",\"width\":100,\"id\":\"remarks\",\"name\":\"Remarks\",\"editable\":false,\"compareValue\":null},{\"label\":\"Item Code\",\"fieldname\":\"item_code\",\"fieldtype\":\"Link\",\"options\":\"Item\",\"width\":100,\"id\":\"item_code\",\"name\":\"Item Code\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"description\",\"fieldtype\":\"Text Editor\",\"label\":\"Description\",\"insert_after_index\":6,\"link_field\":\"item_code\",\"doctype\":\"Item\",\"width\":100,\"id\":\"description\",\"name\":\"Description\",\"editable\":false,\"compareValue\":null},{\"label\":\"Qty\",\"fieldname\":\"qty\",\"fieldtype\":\"Float\",\"width\":120,\"convertible\":\"qty\",\"id\":\"qty\",\"name\":\"Qty\",\"editable\":false,\"compareValue\":null},{\"label\":\"Received Qty\",\"fieldname\":\"received_qty\",\"fieldtype\":\"Float\",\"width\":120,\"convertible\":\"qty\",\"id\":\"received_qty\",\"name\":\"Received Qty\",\"editable\":false,\"compareValue\":null},{\"label\":\"Pending Qty\",\"fieldname\":\"pending_qty\",\"fieldtype\":\"Float\",\"width\":80,\"convertible\":\"qty\",\"id\":\"pending_qty\",\"name\":\"Pending Qty\",\"editable\":false,\"compareValue\":null},{\"label\":\"Billed Qty\",\"fieldname\":\"billed_qty\",\"fieldtype\":\"Float\",\"width\":80,\"convertible\":\"qty\",\"id\":\"billed_qty\",\"name\":\"Billed Qty\",\"editable\":false,\"compareValue\":null},{\"label\":\"Qty to Bill\",\"fieldname\":\"qty_to_bill\",\"fieldtype\":\"Float\",\"width\":80,\"convertible\":\"qty\",\"id\":\"qty_to_bill\",\"name\":\"Qty to Bill\",\"editable\":false,\"compareValue\":null},{\"label\":\"Amount\",\"fieldname\":\"amount\",\"fieldtype\":\"Currency\",\"width\":110,\"options\":\"Company:company:default_currency\",\"convertible\":\"rate\",\"id\":\"amount\",\"name\":\"Amount\",\"editable\":false,\"compareValue\":null},{\"label\":\"Billed Amount\",\"fieldname\":\"billed_amount\",\"fieldtype\":\"Currency\",\"width\":110,\"options\":\"Company:company:default_currency\",\"convertible\":\"rate\",\"id\":\"billed_amount\",\"name\":\"Billed Amount\",\"editable\":false,\"compareValue\":null},{\"label\":\"Pending Amount\",\"fieldname\":\"pending_amount\",\"fieldtype\":\"Currency\",\"width\":130,\"options\":\"Company:company:default_currency\",\"convertible\":\"rate\",\"id\":\"pending_amount\",\"name\":\"Pending Amount\",\"editable\":false,\"compareValue\":null},{\"label\":\"Received Qty Amount\",\"fieldname\":\"received_qty_amount\",\"fieldtype\":\"Currency\",\"width\":130,\"options\":\"Company:company:default_currency\",\"convertible\":\"rate\",\"id\":\"received_qty_amount\",\"name\":\"Received Qty Amount\",\"editable\":false,\"compareValue\":null},{\"label\":\"Warehouse\",\"fieldname\":\"warehouse\",\"fieldtype\":\"Link\",\"options\":\"Warehouse\",\"width\":100,\"id\":\"warehouse\",\"name\":\"Warehouse\",\"editable\":false,\"compareValue\":null},{\"label\":\"Company\",\"fieldname\":\"company\",\"fieldtype\":\"Link\",\"options\":\"Company\",\"width\":100,\"id\":\"company\",\"name\":\"Company\",\"editable\":false,\"compareValue\":null}]}",
+ "modified": "2025-03-07 12:03:37.620618",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Purchase Order Analysis Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "",
+ "ref_doctype": "Purchase Order",
+ "reference_report": "Purchase Order Analysis",
+ "report_name": "Purchase Order Analysis Report",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Purchase Manager"
+  },
+  {
+   "role": "Purchase User"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "Sales User Itfd"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "Engineer SKYTEC"
+  }
+ ]
+}

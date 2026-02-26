@@ -1,0 +1,65 @@
+{
+ "add_total_row": 1,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2023-07-18 10:15:54.233816",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "label": "Fiscal Year",
+   "mandatory": 1,
+   "options": "Fiscal Year",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-10-15 10:10:30.371921",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Monthly Target Report - All",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n   C.sales_person AS \"Sales Person:Link/Sales Person\",\r\n   C.division AS \"Division\",\r\n   C.name AS \"Customer:Link/Customer\",\r\n   C.customer_name AS \"Customer Name\",\r\n\r\n   -- Full Year Target\r\n   (\r\n      SELECT SUM(\r\n         COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) +\r\n         COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0) +\r\n         COALESCE(YTD.oct, 0) + COALESCE(YTD.nov, 0) + COALESCE(YTD.dec, 0) +\r\n         COALESCE(YTD.jan, 0) + COALESCE(YTD.feb, 0) + COALESCE(YTD.mar, 0)\r\n      )\r\n      FROM `tabSales Person Yearly Target Details` YTD\r\n      LEFT JOIN `tabYearly Target` YT ON YT.name = YTD.parent\r\n      WHERE YTD.customer = C.name AND YT.fiscal_year = %(fiscal_year)s\r\n   ) AS \"TargetFullYear:Currency\",\r\n\r\n   -- YTD Target based on the month\r\n   (\r\n      SELECT\r\n      CASE\r\n         WHEN MONTH(%(date)s) = 4 THEN 0\r\n         WHEN MONTH(%(date)s) = 5 THEN ROUND(SUM(COALESCE(YTD.apr, 0)))\r\n         WHEN MONTH(%(date)s) = 6 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0)))\r\n         WHEN MONTH(%(date)s) = 7 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0)))\r\n         WHEN MONTH(%(date)s) = 8 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0)))\r\n         WHEN MONTH(%(date)s) = 9 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0)))\r\n         WHEN MONTH(%(date)s) = 10 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0)))\r\n         WHEN MONTH(%(date)s) = 11 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0) + COALESCE(YTD.oct, 0)))\r\n         WHEN MONTH(%(date)s) = 12 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0) + COALESCE(YTD.oct, 0) + COALESCE(YTD.nov, 0)))\r\n         WHEN MONTH(%(date)s) = 1 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0) + COALESCE(YTD.oct, 0) + COALESCE(YTD.nov, 0) + COALESCE(YTD.dec, 0)))\r\n         WHEN MONTH(%(date)s) = 2 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0) + COALESCE(YTD.oct, 0) + COALESCE(YTD.nov, 0) + COALESCE(YTD.dec, 0) + COALESCE(YTD.jan, 0)))\r\n         WHEN MONTH(%(date)s) = 3 THEN ROUND(SUM(COALESCE(YTD.apr, 0) + COALESCE(YTD.may, 0) + COALESCE(YTD.jun, 0) + COALESCE(YTD.jul, 0) + COALESCE(YTD.aug, 0) + COALESCE(YTD.sep, 0) + COALESCE(YTD.oct, 0) + COALESCE(YTD.nov, 0) + COALESCE(YTD.dec, 0) + COALESCE(YTD.jan, 0) + COALESCE(YTD.feb, 0)))\r\n         ELSE 0\r\n      END\r\n      FROM `tabSales Person Yearly Target Details` YTD\r\n      LEFT JOIN `tabYearly Target` YT ON YT.name = YTD.parent\r\n      WHERE YTD.customer = C.name AND YT.fiscal_year = %(fiscal_year)s\r\n   ) AS \"YTD TARGET:Currency\",\r\n\r\n   -- YTD ACTUAL\r\n   (\r\n      SELECT SUM(SI.net_total)\r\n      FROM `tabSales Invoice` SI\r\n      INNER JOIN `tabSales Team` ST ON ST.parent = SI.name\r\n      WHERE SI.company = %(company)s\r\n        AND C.name = SI.customer\r\n        AND SI.posting_date BETWEEN\r\n           (SELECT year_start_date FROM `tabFiscal Year` WHERE name = %(fiscal_year)s)\r\n           AND %(date)s\r\n        AND SI.docstatus = 1\r\n   ) AS \"YTD ACTUAL:Currency\",\r\n\r\n   -- Previous Month Target\r\n   (\r\n      SELECT MAX(MTD.amount)\r\n      FROM `tabMonthly Target` MT\r\n      LEFT JOIN `tabMonthly Target Details` MTD ON MT.name = MTD.parent\r\n      WHERE MT.company = %(company)s\r\n        AND MT.month = MONTHNAME(DATE_SUB(%(date)s, INTERVAL 1 MONTH))\r\n        AND MT.year = (CASE WHEN MONTH(%(date)s) = 1 THEN YEAR(DATE_SUB(%(date)s, INTERVAL 1 YEAR)) ELSE YEAR(%(date)s) END)\r\n        AND MTD.customer = C.name\r\n   ) AS \"PREVIOUSMONTHTARGET\",\r\n\r\n   -- Previous Month Actual\r\n   (\r\n      SELECT SUM(SI.total)\r\n      FROM `tabSales Invoice` SI\r\n      INNER JOIN `tabSales Team` ST ON ST.parent = SI.name\r\n      WHERE SI.company = %(company)s\r\n        AND C.name = SI.customer\r\n        AND MONTH(SI.posting_date) = MONTH(DATE_SUB(%(date)s, INTERVAL 1 MONTH))\r\n        AND YEAR(SI.posting_date) = (CASE WHEN MONTH(%(date)s) = 1 THEN YEAR(DATE_SUB(%(date)s, INTERVAL 1 YEAR)) ELSE YEAR(%(date)s) END)\r\n        AND SI.docstatus = 1\r\n   ) AS \"PREVIOUS MONTH ACTUAL:Currency\",\r\n\r\n   -- Current Month Target\r\n   (\r\n      SELECT MAX(MTD.amount)\r\n      FROM `tabMonthly Target` MT\r\n      LEFT JOIN `tabMonthly Target Details` MTD ON MT.name = MTD.parent\r\n      WHERE MT.company = %(company)s\r\n        AND MT.docstatus = 1\r\n        AND MT.month = MONTHNAME(%(date)s)\r\n        AND MT.year = YEAR(%(date)s)\r\n        AND MTD.customer = C.name\r\n   ) AS \"CURRENTMONTHTARGET\",\r\n\r\n   -- Current Month Actual\r\n   (\r\n      SELECT SUM(SI.net_total)\r\n      FROM `tabSales Invoice` SI\r\n      INNER JOIN `tabSales Team` ST ON ST.parent = SI.name\r\n      WHERE SI.company = %(company)s\r\n        AND C.name = SI.customer\r\n        AND MONTH(SI.posting_date) = MONTH(%(date)s)\r\n        AND YEAR(SI.posting_date) = YEAR(%(date)s)\r\n        AND SI.docstatus = 1\r\n   ) AS \"CURRENT MONTH ACTUAL:Currency\"\r\n\r\nFROM `tabCustomer` C\r\nWHERE C.company = %(company)s AND C.sales_person != 'Sales Team'\r\nGROUP BY C.name, C.sales_person\r\n",
+ "ref_doctype": "Monthly Target",
+ "report_name": "Monthly Target Report - All",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Mgr"
+  },
+  {
+   "role": "Yearly TGT GM"
+  },
+  {
+   "role": "Engineer"
+  }
+ ],
+ "timeout": 0
+}

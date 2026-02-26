@@ -1,0 +1,63 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2023-06-10 12:54:38.418906",
+ "disable_prepared_report": 0,
+ "disabled": 1,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "label": "Fiscal Year",
+   "mandatory": 1,
+   "options": "Fiscal Year",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-03-18 14:50:28.781513",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Test Monthly target",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select\r\nAA.SALESPERSON, AA.CUSTOMER, AA.CUSTOMERNAME\r\n,(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec + YTD.jan + YTD.feb + YTD.mar) as \"TargetFullYear:Currency\",\r\n(case when monthname(%(date)s)=\"April\" Then 0 \r\nwhen monthname(%(date)s)=\"May\" Then round(YTD.apr)\r\nwhen monthname(%(date)s)=\"June\" Then round(YTD.apr + YTD.may)\r\nwhen monthname(%(date)s)=\"July\" Then round(YTD.apr + YTD.may + YTD.jun)\r\nwhen monthname(%(date)s)=\"August\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul)\r\nwhen monthname(%(date)s)=\"September\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug)\r\nwhen monthname(%(date)s)=\"October\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep)\r\nwhen monthname(%(date)s)=\"November\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct)\r\nwhen monthname(%(date)s)=\"December\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov)\r\nwhen monthname(%(date)s)=\"January\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec)\r\nwhen monthname(%(date)s)=\"February\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec + YTD.jan)\r\nwhen monthname(%(date)s)=\"March\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec + YTD.jan + YTD.feb)\r\nElse 0 end) as \"YTD TARGET:Currency\",\r\n(select SUM(SI.total) from `tabSales Invoice` SI\r\ninner join `tabSales Team` ST on ST.parent = SI.name\r\nwhere SI.company = %(company)s and YTD.customer = SI.customer and ST.sales_person = YT.sales_person and SI.posting_date >= YT.start_date and SI.posting_date <= %(date)s and SI.docstatus = 1) as \"YTD ACTUAL:Currency\",\r\n(select MTD.amount from `tabMonthly Target` MT\r\ninner join `tabMonthly Target Details` MTD on MTD.parent = MT.name\r\nwhere MT.month = monthname(DATE_SUB(%(date)s, INTERVAL 1 MONTH)) and MT.year = (case when monthname(%(date)s) = 'January' then year(DATE_SUB(%(date)s, INTERVAL 1 YEAR)) else year(%(date)s) end) and YTD.customer = MTD.customer and MT.sales_person = YT.sales_person and MT.docstatus = 1)\"PREVIOUS MONTH TARGET:Currency\",\r\n(select SUM(SI.total) from `tabSales Invoice` SI\r\ninner join `tabSales Team` ST on ST.parent = SI.name\r\nwhere SI.company = %(company)s and ST.sales_person = YT.sales_person and YTD.customer = SI.customer and monthname(SI.posting_date) = monthname(DATE_SUB(%(date)s, INTERVAL 1 MONTH)) and year(SI.posting_date) = (case when monthname(%(date)s) = 'January' then year(DATE_SUB(%(date)s, INTERVAL 1 YEAR)) else year(%(date)s) end) and SI.docstatus = 1) as \"PREVIOUS MONTH ACTUAL:Currency\",\r\n(select MTD.amount from `tabMonthly Target` MT\r\ninner join `tabMonthly Target Details` MTD on MTD.parent = MT.name\r\nwhere monthname(%(date)s)= MT.month and year(%(date)s)=MT.year and YTD.customer = MTD.customer and MT.docstatus = 1)\"CURRENT MONTH TARGET:Currency\",\r\n(select SUM(SI.total) from `tabSales Invoice` SI\r\ninner join `tabSales Team` ST on ST.parent = SI.name\r\nwhere SI.company = %(company)s and ST.sales_person = YT.sales_person and YTD.customer = SI.customer and monthname(%(date)s)= monthname(SI.posting_date) and year(%(date)s)= year(SI.posting_date) and SI.docstatus = 1) as \"CURRENT MONTH ACTUAL:Currency\"\r\nfrom (\r\n\r\nselect\r\nMT.sales_person as \"SALESPERSON\",\r\nMTD.customer as \"CUSTOMER\",\r\nMTD.customer_name as \"CUSTOMERNAME\"\r\nfrom `tabMonthly Target` as MT\r\ninner join `tabMonthly Target Details` as MTD on MT.name = MTD.parent\r\nwhere MT.company=%(company)s and MT.docstatus = 1 and MT.month = monthname(%(date)s) and MT.year = year(%(date)s)\r\ngroup by MTD.customer\r\n) AA\r\nleft outer join `tabSales Person Yearly Target Details` as YTD on YTD.customer = AA.CUSTOMER\r\nleft outer join `tabYearly Target` as YT on  YT.name = YTD.parent\r\n\r\norder by AA.CUSTOMERNAME\r\n",
+ "ref_doctype": "Monthly Target",
+ "report_name": "Test Monthly target",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Mgr"
+  },
+  {
+   "role": "Yearly TGT GM"
+  },
+  {
+   "role": "Engineer"
+  }
+ ]
+}

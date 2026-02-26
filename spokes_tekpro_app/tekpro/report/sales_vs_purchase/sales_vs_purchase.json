@@ -1,0 +1,66 @@
+{
+ "add_total_row": 1,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2023-06-05 10:20:57.206285",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{}",
+ "letterhead": null,
+ "modified": "2025-11-22 13:28:51.661765",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Sales vs Purchase",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    Tab.Warehouse AS \"Warehouse:Link/Warehouse:200\",\r\n    IFNULL(Tab.SalesInvoiceAmount, 0) AS \"SalesInvoiceAmount:Float:200\",\r\n    IFNULL(Tab.PurchaseInvoiceAmount, 0) AS \"PurchaseInvoiceAmount:Float:200\",\r\n    IFNULL(Tab.EndDayStockValue, 0) AS \"EndDayStockValue:Float:200\",\r\n    IFNULL(Tab.DCValue, 0) AS \"DCValue:Float:200\"\r\nFROM\r\n    (\r\n        SELECT\r\n            W.name AS \"Warehouse\",\r\n            (\r\n                SELECT SUM(SI.total)\r\n                FROM `tabSales Invoice` SI\r\n                WHERE SI.set_warehouse = W.name\r\n                AND SI.docstatus = 1\r\n                AND (DATE(SI.posting_date) BETWEEN %(from_date)s AND %(to_date)s)\r\n                AND SI.company = %(company)s\r\n            ) AS \"SalesInvoiceAmount\",\r\n            (\r\n                SELECT \r\n                     SUM(PI.base_total)\r\n                \r\n                FROM `tabPurchase Invoice` PI\r\n                WHERE PI.set_warehouse = W.name\r\n                    AND PI.docstatus = 1\r\n                    AND (DATE(PI.posting_date) BETWEEN %(from_date)s AND %(to_date)s)\r\n                    AND PI.company = %(company)s\r\n            ) AS \"PurchaseInvoiceAmount\",\r\n            (\r\n               SELECT\r\n           \r\n              sum(sle.stock_value_difference)\r\n          FROM\r\n           `tabStock Ledger Entry` AS sle\r\n         where sle.company =  %(company)s and sle.is_cancelled = 0 and sle.docstatus < 2 and sle.warehouse = W.name  \r\n               and sle.posting_date <= %(to_date)s\r\n        Order by \r\n        sle.posting_date DESC \r\n               \r\n            ) AS \"EndDayStockValue\",\r\n                \r\n                \r\n               COALESCE((\r\n        SELECT SUM(DCI.qty * I.last_purchase_rate)\r\n        FROM `tabDelivery Note` DC\r\n        INNER JOIN `tabDelivery Note Item` DCI ON DC.name = DCI.parent\r\n        LEFT OUTER JOIN `tabItem` I ON I.name = CASE \r\n            WHEN DCI.item_code LIKE '%%-F' THEN REPLACE(DCI.item_code, '-F', '-S')\r\n            ELSE DCI.item_code \r\n        END\r\n        WHERE DC.set_warehouse = W.name\r\n        AND DC.docstatus = 1\r\n        AND(DATE(DC.posting_date) BETWEEN %(from_date)s AND %(to_date)s)\r\n        AND DC.company = %(company)s\r\n    ), 0) AS \"DCValue\"\r\n            \r\n\r\n\r\n\r\n        FROM\r\n            `tabWarehouse` AS W \r\n            \r\n             \r\n        WHERE\r\n            W.company = %(company)s  \r\n            AND W.name not like '%%Expenses%%'\r\n           \r\n        GROUP BY W.name\r\n    ) AS Tab\r\nWHERE\r\n    Tab.SalesInvoiceAmount > 0 OR Tab.PurchaseInvoiceAmount > 0 OR Tab.EndDayStockValue > 0 OR Tab.DCValue > 0;\r\n",
+ "ref_doctype": "Sales Invoice",
+ "report_name": "Sales vs Purchase",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Employee Self Service"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "Engineer"
+  }
+ ],
+ "timeout": 0
+}

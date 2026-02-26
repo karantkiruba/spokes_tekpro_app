@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2023-12-18 18:03:49.742702",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "item_description",
+  "tms_operation_cpc",
+  "tool_operation_code",
+  "tool_operation_description",
+  "c_cpc",
+  "t_cpc",
+  "tool_life",
+  "z",
+  "n",
+  "remarks",
+  "usage"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "item.description",
+   "fieldname": "item_description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Description"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.tool_operation_code",
+   "fieldname": "tool_operation_code",
+   "fieldtype": "Data",
+   "label": "Tool Operation Code"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.tool_operation_description",
+   "fieldname": "tool_operation_description",
+   "fieldtype": "Data",
+   "label": "Tool Operation Description"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.c_cpc",
+   "fieldname": "c_cpc",
+   "fieldtype": "Data",
+   "label": "C -cpc"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.target_cpc",
+   "fieldname": "t_cpc",
+   "fieldtype": "Data",
+   "label": "T -cpc"
+  },
+  {
+   "columns": 2,
+   "fieldname": "tms_operation_cpc",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TMS Operation CPC Id",
+   "options": "TMS Operation CPC"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.tool_life",
+   "fieldname": "tool_life",
+   "fieldtype": "Data",
+   "label": "Tool Life"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.z",
+   "fieldname": "z",
+   "fieldtype": "Data",
+   "label": "Z"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.n",
+   "fieldname": "n",
+   "fieldtype": "Data",
+   "label": "N"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.remarks",
+   "fieldname": "remarks",
+   "fieldtype": "Data",
+   "label": "Remarks"
+  },
+  {
+   "fetch_from": "tms_operation_cpc.usage",
+   "fieldname": "usage",
+   "fieldtype": "Select",
+   "label": "Usage",
+   "options": "Single\nMulti"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-05-08 19:18:29.533387",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Item Details",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

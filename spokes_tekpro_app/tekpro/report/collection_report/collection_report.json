@@ -1,0 +1,74 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2023-05-19 17:46:05.765642",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "from_to",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": " To Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": " Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-09-27 18:04:52.581682",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Collection Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    PE.name AS \"ID:Link/Payment Entry:120\",\r\n    PE.posting_date AS \"Posting Date:Date:70\",\r\n    SIEM.sales_person AS \"Sales Person:Link/Sales Person\",\r\n    PE.party AS \"Party:Link/Customer:120\",\r\n    PE.party_name AS \"Party Name\",\r\n    PE.paid_amount AS \"Received Amount:Currency\",\r\n    PE.status AS \"Status\",\r\n    PER.reference_name AS \"Name(Payment Entry Reference)\",\r\n    PER.allocated_amount AS \"Allocated(Payment Entry Reference):Currency\",\r\n    PER.due_date AS \"Due date(Payment Entry Reference):Date:70\",\r\n    PE.unallocated_amount AS \"Unallocated Amount:Currency\",\r\n   CASE\r\n        WHEN PE.unallocated_amount = 0 THEN CAST(PER.allocated_amount AS DECIMAL(10, 2))\r\n        ELSE CAST(PE.unallocated_amount + COALESCE(PER.allocated_amount, 0) AS DECIMAL(10, 2))\r\n    END AS \"Total:Currency\"\r\nFROM \r\n    `tabPayment Entry` AS PE \r\n    LEFT OUTER JOIN `tabPayment Entry Reference` AS PER ON PER.parent = PE.name\r\n    LEFT OUTER JOIN `tabCustomer` AS SIEM ON SIEM.name = PE.party\r\nWHERE \r\n    (DATE(PE.`posting_date`) BETWEEN %(from_to)s AND %(to_date)s)  \r\n    AND PE.company = %(company)s \r\n    AND PE.docstatus = 1\r\n    AND PE.payment_type = \"Receive\"\r\nGROUP BY\r\n    PE.name,PER.reference_name\r\n\r\nUNION\r\n\r\nSELECT\r\n    JE.name AS \"ID:Link/Journal Entry:120\",\r\n    JE.posting_date AS \"Posting Date:Date:70\",\r\n    SIEM1.sales_person AS \"Sales Person\",\r\n    JEA.party AS \"Party:Link/Customer:120\",\r\n    (SELECT GROUP_CONCAT(CU.customer_name) FROM `tabCustomer` CU WHERE CU.name = JEA.party) AS \"Party Name\",\r\n    CASE \r\n        WHEN JEA.reference_name IS NOT NULL THEN JE.total_credit  \r\n        ELSE 0 \r\n    END AS \"Received Amount:Currency\",\r\n    JE.docstatus AS \"Status\",\r\n    JEA.reference_name AS \"Name(Payment Entry Reference)\",\r\n    CASE \r\n        WHEN JEA.reference_name IS NOT NULL THEN JEA.credit_in_account_currency \r\n        ELSE 0 \r\n    END AS \"Allocated(Payment Entry Reference):Currency\",\r\n    JEA.reference_due_date AS \"Due date(Payment Entry Reference):Date:70\",\r\n   CASE \r\n        WHEN JEA.reference_name IS NULL THEN JEA.credit_in_account_currency \r\n        ELSE 0 \r\n    END AS \"Unallocated Amount\",\r\n    JEA.credit_in_account_currency AS \"Total:Currency\"\r\n \r\nFROM \r\n    `tabJournal Entry` AS JE\r\n    INNER JOIN `tabJournal Entry Account` JEA ON JE.name = JEA.parent AND JEA.party_type = \"Customer\"\r\n    LEFT JOIN `tabPayment Entry` AS PE ON JE.name = PE.name\r\n    LEFT OUTER JOIN `tabCustomer` AS SIEM1 ON SIEM1.name = JEA.party\r\n    \r\nWHERE \r\n    (DATE(JE.`posting_date`) BETWEEN %(from_to)s AND %(to_date)s)\r\n    AND JE.company = %(company)s\r\n    AND JE.docstatus = 1\r\nGROUP BY\r\n    JE.name, JEA.reference_name;\r\n",
+ "ref_doctype": "Payment Entry",
+ "report_name": "Collection Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  }
+ ]
+}

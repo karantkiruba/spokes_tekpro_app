@@ -1,0 +1,74 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2023-05-20 16:06:54.368273",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-11-25 10:56:05.388216",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Delivery Note Company Wise Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    DN.name as \"DELIVERY NOTE NO:Link/Delivery Note:120\",\r\n    DN.posting_date as \"DELIVERY NOTE DATE:Date:70\",\r\n    DN.company as \"Company:Link/Company:120\",\r\n    DN.customer as \"CUSTOMER:Link/Customer:120\",\r\n    DN.customer_name as \"CUSTOMER NAME\",\r\n    DN.purpose as \"PURPOSE\",\r\n    DNO.item_code as \"ITEM CODE:Link/Item:120\",\r\n    DNO.description as \"DESCRIPTION\",\r\n    (select c.sales_person from `tabCustomer` c where c.name = DN.customer) as \"SALES PERSON:Link/Sales Person\",\r\n    ifnull(DNO.qty, 0) as \"DELIVERY NOTE QTY:Float:100\",\r\n    DN.status as \"DELIVERY NOTE STATUS\",\r\n    (select SO.name from `tabSales Order` as SO where SO.customer = DN.customer and SO.delivery_note = DN.name and SO.docstatus = 1 LIMIT 1) as \"SALES ORDER NO:Link/Sales Order:120\",\r\n    (select SO.transaction_date from `tabSales Order` as SO where SO.customer = DN.customer and SO.delivery_note = DN.name and SO.docstatus = 1 LIMIT 1) as \"SALES ORDER DATE:Date:70\",\r\n    (select GROUP_CONCAT(SOI.qty, 0) from `tabSales Order` as SO\r\n     inner join `tabSales Order Item` as SOI on SO.name = SOI.parent\r\n     where SOI.item_code = DNO.item_code and SO.customer = DN.customer and SO.delivery_note = DN.name and SO.docstatus = 1 LIMIT 1) as \"SALES ORDER QTY:Float:100\",\r\n    \r\n    (select GROUP_CONCAT(SI.name) from `tabSales Invoice` as SI where  SI.customer = DN.customer and DN.name = SI.delivery_note and SI.docstatus = 1 LIMIT 1) as \"INVOICE NO:Link/Sales Invoice:120\",\r\n    (select GROUP_CONCAT(SI.posting_date) from `tabSales Invoice` as SI where  SI.customer = DN.customer and  DN.name = SI.delivery_note and SI.docstatus = 1 LIMIT 1) as \"INVOICE DATE\",\r\n    \r\n    (select ifnull(sum(SII.qty), 0) from `tabSales Invoice` as SI\r\n     inner join `tabSales Invoice Item` as SII on SI.name = SII.parent\r\n     where SII.item_code = DNO.item_code and SI.customer = DN.customer and SI.delivery_note = DN.name and SI.docstatus = 1 LIMIT 1) as \"INVOICE QTY\",\r\n    CASE\r\n        WHEN DN.status = 'Cancelled' THEN 0\r\n        WHEN DN.status = 'Return Issued' THEN 0\r\n        ELSE (\r\n            (select IFNULL(DNO.qty, 0) + IFNULL(SUM(DNO1.qty), 0)\r\n             from `tabDelivery Note` DN1\r\n             inner join `tabDelivery Note Item` AS DNO1 ON DN1.name = DNO1.parent\r\n             where DN1.docstatus = 1 and DN1.is_return = 1 and DNO1.item_code = DNO.item_code and DN1.customer = DN.customer and DN.name = DN1.return_against\r\n            ) - IFNULL(\r\n                (select ifnull(sum(SII.qty), 0) from `tabSales Invoice` as SI\r\n                 inner join `tabSales Invoice Item` as SII on SI.name = SII.parent\r\n                 where SII.item_code = DNO.item_code and SI.customer = DN.customer and SI.delivery_note = DN.name and SI.docstatus = 1 and DN.docstatus = 1 LIMIT 1), 0\r\n            )\r\n        )\r\n    END as \"PENDING QTY:Data:100\",\r\n    DNO.incoming_rate as \"INCOMING RATE:Currency:100\",\r\n    (select SRI.valuation_rate from `tabStock Reconciliation` SR inner join `tabStock Reconciliation Item` as SRI on SR.name = SRI.parent where SRI.item_code = DNO.item_code and SR.docstatus = 1 and SR.company = DN.company and SR.company = %(company)s LIMIT 1) as \"Valuation Rate:Currency:100\",\r\n    CASE\r\n        WHEN (\r\n            CASE\r\n                WHEN DN.status = 'Cancelled' THEN 0\r\n                WHEN DN.status = 'Return Issued' THEN 0\r\n                ELSE (\r\n                    (select IFNULL(DNO.qty, 0) + IFNULL(SUM(DNO1.qty), 0)\r\n                     from `tabDelivery Note` DN1\r\n                     inner join `tabDelivery Note Item` AS DNO1 ON DN1.name = DNO1.parent\r\n                     where DN1.docstatus = 1 and DN1.is_return = 1 and DNO1.item_code = DNO.item_code and DN1.customer = DN.customer and DN.name = DN1.return_against\r\n                    ) - IFNULL(\r\n                        (select ifnull(sum(SII.qty), 0) from `tabSales Invoice` as SI\r\n                         inner join `tabSales Invoice Item` as SII on SI.name = SII.parent\r\n                         where SII.item_code = DNO.item_code and SI.customer = DN.customer and SI.delivery_note = DN.name and SI.docstatus = 1 and DN.docstatus = 1 LIMIT 1), 0\r\n                    )\r\n                )\r\n            END\r\n        ) = 0 THEN 'Completed'\r\n        WHEN (\r\n            CASE\r\n                WHEN DN.status = 'Cancelled' THEN 0\r\n                WHEN DN.status = 'Return Issued' THEN 0\r\n                ELSE (\r\n                    (select IFNULL(DNO.qty, 0) + IFNULL(SUM(DNO1.qty), 0)\r\n                     from `tabDelivery Note` DN1\r\n                     inner join `tabDelivery Note Item` AS DNO1 ON DN1.name = DNO1.parent\r\n                     where DN1.docstatus = 1 and DN1.is_return = 1 and DNO1.item_code = DNO.item_code and DN1.customer = DN.customer and DN.name = DN1.return_against\r\n                    ) - IFNULL(\r\n                        (select ifnull(sum(SII.qty), 0) from `tabSales Invoice` as SI\r\n                         inner join `tabSales Invoice Item` as SII on SI.name = SII.parent\r\n                         where SII.item_code = DNO.item_code and SI.customer = DN.customer and SI.delivery_note = DN.name and SI.docstatus = 1 and DN.docstatus = 1 LIMIT 1), 0\r\n                    )\r\n                )\r\n            END\r\n        ) < 0 THEN 'Returned'\r\n        ELSE 'Pending'\r\n    END as \"STATUS\"\r\nFROM\r\n    `tabDelivery Note` DN\r\n    inner join  `tabDelivery Note Item` as DNO on DN.name = DNO.parent\r\n    inner join  `tabSales Team` as DSO on DN.name = DSO.parent\r\nWHERE\r\n    DN.docstatus = 1 and DN.is_return = 0 and (DATE(DN.`posting_date`) between %(from_date)s and %(to_date)s) and DN.company = %(company)s AND (DN.status = %(status)s OR %(status)s = 'ALL')\r\n    ORDER BY DN.name;\r\n",
+ "ref_doctype": "Delivery Note",
+ "report_name": "Delivery Note Company Wise Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "DC Engineer"
+  },
+  {
+   "role": "DC Manager"
+  },
+  {
+   "role": "DC Store Manager"
+  },
+  {
+   "role": "ITFD tekpro"
+  }
+ ],
+ "timeout": 0
+}

@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "autoname": "field:party",
+ "creation": "2023-12-18 17:53:03.069562",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "party_type",
+  "party",
+  "party_name",
+  "column_break_3",
+  "restrict_based_on",
+  "based_on_value",
+  "doctype1",
+  "section_break_9",
+  "item_details"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "default": "Customer",
+   "fieldname": "party_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Party Type",
+   "options": "Customer\nSupplier",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Party",
+   "options": "Customer",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "party.customer_name",
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "label": "Party Name"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Item",
+   "fieldname": "restrict_based_on",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Restrict Items Based On",
+   "options": "Item\nItem Group\nBrand",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "based_on_value",
+   "fieldtype": "Dynamic Link",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Based On Value",
+   "options": "restrict_based_on"
+  },
+  {
+   "default": "Delivery Note",
+   "fieldname": "doctype1",
+   "fieldtype": "Link",
+   "label": "Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "item_details",
+   "fieldtype": "Table",
+   "label": "Item Details",
+   "options": "Item Details"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-05-08 19:14:41.637990",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Doctypewise Party Specific Item",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "party",
+ "track_changes": 1
+}

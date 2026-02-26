@@ -1,0 +1,76 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2023-04-18 16:04:09.801376",
+ "disable_prepared_report": 0,
+ "disabled": 1,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Month",
+   "mandatory": 1,
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Select",
+   "label": "Year",
+   "mandatory": 1,
+   "options": "2023\n2024\n2025",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "sales_person",
+   "fieldtype": "Link",
+   "label": "Sales person",
+   "mandatory": 1,
+   "options": "Sales Person",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2023-06-15 13:42:32.655844",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Monthly Collection sample report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "Select\nMCT.year as 'Year:data:100',\nMCT.month as 'Month:Data:100',\nMCTD.customer as \"Customer:Link/Customer:120\",\nMCTD.customer_name as \"Customer Name:Data:240\",\nMCTD.amount as \"Collection Target Amount:currency:180\",\n(Select sum(PE.paid_amount) from `tabPayment Entry` PE\nwhere PE.docstatus=1 and PE.party = MCTD.customer and PE.payment_type = \"Receive\"\nand MCT.month = MONTHNAME(PE.posting_date) and  MCT.year = YEAR(PE.posting_date)) as \"PAYMENT Collection Amount:currency:180\",\n\n(Select sum(JEA.credit_in_account_currency) from `tabJournal Entry` as JE \ninner join `tabJournal Entry Account` as JEA on JE.name = JEA.parent\nwhere JE.docstatus=1 and JEA.party = MCTD.customer and JEA.party_type = \"Customer\"\nand MCT.month = MONTHNAME(JE.posting_date) and  MCT.year = YEAR(JE.posting_date)) as \"Actual Collection Amount:currency:180\"\nfrom `tabMonthly Collection Target` as MCT\ninner join `tabMonthly Collection Target Details` as MCTD on MCT.name = MCTD.parent\nwhere MCT.month = %(month)s and MCT.year = %(year)s and MCT.sales_person=%(sales_person)s and MCT.docstatus = 1\norder by MCTD.customer_name",
+ "ref_doctype": "Monthly Collection Target",
+ "report_name": "Monthly Collection sample report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "Monthly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Monthly collection TGT Engr"
+  },
+  {
+   "role": "Manager"
+  }
+ ]
+}

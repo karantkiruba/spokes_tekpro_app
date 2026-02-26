@@ -1,0 +1,67 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2024-07-23 18:44:32.784642",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "year",
+   "fieldtype": "Select",
+   "label": "YEAR",
+   "mandatory": 1,
+   "options": "2022\n2023\n2024\n2025",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "MONTH",
+   "mandatory": 1,
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "COMPANY",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-12-30 16:52:32.098947",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Stock Planning Status demo",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "Select SP.name as \"ID:Link/Stock Planning\",\nSP.date as \"DATE:Date/Stock Planning\", \nSP.sales_person as \"SALES PERSON:Link/Sales Person\",\nSPC.customer_master as \"CUSTOMER\",\nSP.warehouse as \"WAREHOUSE:Link/Warehouse\",\nSPC.item_group as \"ITEM GROUP\",\nSPC.item_code as \"ITEM CODE:Link/Item\",\nSPC.item_description as \"ITEM DESCRIPTION\",\nSPC.closing_stock as \"CLOSING STOCK\",\nSPC.month_1 as \"MONTH 1\",\nSPC.month_2 as \"MONTH 2\", \nSPC.month_3 as \"MONTH 3\",\nSPC.month_4 as \"MONTH 4\",\nSPC.month_5 as \"MONTH 5\",\nSPC.month_6 as \"MONTH 6\",\n\nSPC.pending_po_quantity as \"PENDING PO QUANTITY\",\nSPC.current_month_quantity as \"CURRENT MONTH QUANTITY\",\nSPC.to_order as \"TO ORDER\",\n(select TB.actual_qty from `tabBin`as TB where SPC.item_code=TB.item_code and SP.warehouse = TB.warehouse  LIMIT 1 ) as \"CURRENT STOCK\",\n(select sum(sod.qty - sod.delivered_qty) from `tabSales Order` so inner join `tabSales Order Item` sod on sod.parent = so.name\nwhere sod.item_code = SPC.item_code and monthname(so.transaction_date)=%(month)s and year(so.transaction_date)=%(year)s and so.company=%(company)s and so.docstatus = 1) as \"SO Pending qty\",\n(select sum(pod.qty - pod.received_qty) from `tabPurchase Order` po inner join `tabPurchase Order Item` pod on pod.parent = po.name\nwhere pod.item_code = SPC.item_code and monthname(po.transaction_date)=%(month)s and year(po.transaction_date)=%(year)s and po.company=%(company)s and po.status <> 'Cancelled' and po.docstatus = 1) as \"PO Pending qty\",\n(select sum(pod.qty - pod.received_qty) from `tabPurchase Order` po inner join `tabPurchase Order Item` pod on pod.parent = po.name\n where pod.item_code = SPC.item_code and po.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d')) \n and po.company = %(company)s and po.status <> 'Cancelled' and po.docstatus = 1) as \"Total PO Pending qty\",\n (SELECT SUM(pod.qty - pod.received_qty) \nFROM `tabPurchase Order` po\nINNER JOIN `tabPurchase Order Item` pod ON pod.parent = po.name\nWHERE pod.item_code = SPC.item_code \nAND MONTHNAME(DATE_ADD(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d'), INTERVAL 1 MONTH)) = MONTHNAME(pod.schedule_date)\nAND YEAR(DATE_ADD(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d'), INTERVAL 1 MONTH)) = YEAR(pod.schedule_date)\nAND po.company = %(company)s\nAND po.status <> 'Cancelled'\nAND po.docstatus = 1) AS \"N1\",\n(SELECT SUM(pod.qty - pod.received_qty) \nFROM `tabPurchase Order` po\nINNER JOIN `tabPurchase Order Item` pod ON pod.parent = po.name\nWHERE pod.item_code = SPC.item_code \nAND MONTHNAME(DATE_ADD(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d'), INTERVAL 2 MONTH)) = MONTHNAME(pod.schedule_date)\nAND YEAR(DATE_ADD(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d'), INTERVAL 2 MONTH)) = YEAR(pod.schedule_date)\nAND po.company = %(company)s\nAND po.status <> 'Cancelled'\nAND po.docstatus = 1) AS \"N2\",\n(SELECT SUM(pod.qty - pod.received_qty) \nFROM `tabPurchase Order` po\nINNER JOIN `tabPurchase Order Item` pod ON pod.parent = po.name\nWHERE pod.item_code = SPC.item_code \nAND MONTHNAME(DATE_ADD(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d'), INTERVAL 3 MONTH)) = MONTHNAME(pod.schedule_date)\nAND YEAR(DATE_ADD(STR_TO_DATE(CONCAT(%(year)s, '-', %(month)s, '-01'), '%%Y-%%M-%%d'), INTERVAL 3 MONTH)) = YEAR(pod.schedule_date)\nAND po.company = %(company)s\nAND po.status <> 'Cancelled'\nAND po.docstatus = 1) AS \"N3\",\n\n(select sum(SOI.qty)  from `tabSales Invoice`as SO  inner join `tabSales Invoice Item`as SOI on SOI.parent = SO.name where SO.docstatus=1  and monthname(SO.posting_date)=%(month)s and year(SO.posting_date)=%(year)s and SO.company=%(company)s and SOI.item_code = SPC.item_code LIMIT 1) as \"CURRENT MONTH SALES QUANTITY\",\n(select(select sum(SOI.qty)  from `tabSales Invoice`as SO  inner join `tabSales Invoice Item`as SOI on SOI.parent = SO.name where SO.docstatus=1  and monthname(SO.posting_date)=%(month)s and year(SO.posting_date)=%(year)s and SO.company=%(company)s and SOI.item_code = SPC.item_code LIMIT 1)/ SPC.current_month_quantity) as \"MOVEMENT\"\n\n\nfrom `tabStock Planning` as SP \n\ninner join `tabStock Planning Quantity` as SPC on SP.name = SPC.parent\nwhere SP.month = %(month)s and SP.year=%(year)s and SP.company=%(company)s\n",
+ "ref_doctype": "Stock Planning",
+ "report_name": "Stock Planning Status demo",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Sales User Itfd"
+  }
+ ]
+}

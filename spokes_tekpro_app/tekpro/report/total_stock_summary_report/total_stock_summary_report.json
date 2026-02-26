@@ -1,0 +1,68 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2023-04-13 16:44:44.222946",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 1,
+ "is_standard": "Yes",
+ "letter_head": null,
+ "modified": "2026-02-10 16:07:18.496899",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Total Stock Summary Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    b.warehouse AS \"Warehouse:Data:120\",\r\n    i.item_code AS \"Item Code:Link/Item:100\",\r\n    i.description AS \"Description:Data:120\",\r\n    i.item_group AS \"Item Group:Data:120\",\r\n    i.stock_uom AS \"UOM:Data:100\",\r\n    i.customer_master AS \"Customer Master:Data:120\",\r\n    i.sales_person_master AS \"Sales Person Master:Data:120\",\r\n\r\n    b.actual_qty AS \"Current Qty:Float:100\",\r\n    b.reserved_stock AS \"Reserved Qty:Float:100\",\r\n    (b.actual_qty - b.reserved_stock) AS \"UnAllocated Qty:Float:100\",\r\n\r\n    CASE WHEN b.projected_qty < 0 THEN b.projected_qty ELSE 0 END AS \"Projected Qty:Float:100\",\r\n\r\n    IFNULL(asn.asn_qty,0) AS \"ASN Qty:Float:100\",\r\n\r\n    IFNULL(po_pending.po_pending_qty,0) AS \"PO Pending Qty:Float:100\",\r\n\r\n    (\r\n        SELECT MAX(pi.posting_date)\r\n        FROM `tabPurchase Invoice` pi\r\n        INNER JOIN `tabPurchase Invoice Item` pii \r\n            ON pii.parent = pi.name\r\n        WHERE pii.item_code = i.item_code\r\n          AND pi.docstatus = 1\r\n          AND pi.is_return = 0\r\n          AND pi.is_subcontracted = 0\r\n    ) AS \"Last Purchase Date:Date\",\r\n\r\n    wd.type AS \"Type:Data:80\",\r\n    CASE WHEN wd.to_be_check = 1 THEN '\u2611\ufe0f' ELSE '\u2b1c\ufe0f' END AS \"To Be Check:Data:50\",\r\n    wd.rack AS \"Rack:Data:80\",\r\n    wd.bin AS \"Bin:Data:80\",\r\n\r\n    /* Month Sales */\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(CURDATE()) \r\n         AND MONTH(si.posting_date) = MONTH(CURDATE()) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M0\",\r\n\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M1\",\r\n\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M2\",\r\n\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M3\",\r\n\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M4\",\r\n\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M5\",\r\n\r\n    SUM(CASE \r\n        WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M6\"\r\n\r\nFROM `tabBin` b\r\n\r\nINNER JOIN `tabItem` i \r\n    ON b.item_code = i.item_code\r\n\r\nINNER JOIN `tabWarehouse` w \r\n    ON w.name = b.warehouse\r\n\r\nLEFT JOIN `tabWarehouse Details` wd \r\n    ON wd.parent = i.item_code \r\n   AND wd.warehouse = b.warehouse\r\n\r\n/* ASN JOIN */\r\nLEFT JOIN (\r\n    SELECT \r\n        pod.item_code,\r\n        pod.warehouse,\r\n        SUM(pod.qty) AS asn_qty\r\n    FROM `tabPurchase Receipt` po\r\n    INNER JOIN `tabPurchase Receipt Item` pod \r\n        ON pod.parent = po.name\r\n    WHERE po.docstatus = 0 and po.workflow_state = 'In Transit'\r\n    GROUP BY pod.item_code, pod.warehouse\r\n) asn \r\nON asn.item_code = b.item_code \r\nAND asn.warehouse = b.warehouse\r\n\r\n/* PO Pending JOIN */\r\nLEFT JOIN (\r\n    SELECT \r\n        poi.item_code,\r\n        poi.warehouse,\r\n        SUM(poi.qty - poi.received_qty) AS po_pending_qty\r\n    FROM `tabPurchase Order` po\r\n    INNER JOIN `tabPurchase Order Item` poi \r\n        ON poi.parent = po.name\r\n    WHERE po.docstatus = 1\r\n      AND po.status NOT IN ('Cancelled','Closed')\r\n    GROUP BY poi.item_code, poi.warehouse\r\n) po_pending\r\nON po_pending.item_code = b.item_code\r\nAND po_pending.warehouse = b.warehouse\r\n\r\nLEFT JOIN `tabSales Invoice Item` sii \r\n    ON sii.item_code = b.item_code\r\n\r\nLEFT JOIN `tabSales Invoice` si \r\n    ON si.name = sii.parent \r\n   AND si.docstatus = 1\r\n   AND si.posting_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)\r\n\r\nWHERE\r\n(\r\n    b.actual_qty > 0\r\n    OR b.projected_qty < 0\r\n    OR IFNULL(asn.asn_qty,0) > 0\r\n    OR IFNULL(po_pending.po_pending_qty,0) > 0\r\n)\r\n\r\nGROUP BY\r\n    b.warehouse, \r\n    i.item_code, \r\n    wd.type, \r\n    wd.rack, \r\n    wd.bin\r\n\r\nORDER BY\r\n    i.item_code;\r\n",
+ "ref_doctype": "Stock Entry",
+ "report_name": "Total Stock Summary Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Manufacturing User"
+  },
+  {
+   "role": "Manufacturing Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Manager"
+  }
+ ],
+ "timeout": 0
+}

@@ -1,0 +1,84 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2024-09-02 14:57:23.425700",
+ "disable_prepared_report": 0,
+ "disabled": 1,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-09-02 15:07:29.837648",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "TMS GEARS REPORT",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select \nC.name as \"Customer:Link/Customer:200\",\nC.customer_name as \"Customer Name:Data:200\",\nC.customer_group as \"Customer Group:Data:200\",\nCOALESCE((Select Sum(SI.total) from `tabSales Invoice` SI where C.name = SI.customer and SI.docstatus = 1 and (DATE(SI.posting_date) BETWEEN %(from_date)s AND %(to_date)s)),0) as \"Sales Value:Data:200\",\nCOALESCE((Select Sum(DCI.qty * I.last_purchase_rate)\nfrom `tabDelivery Note` DC \ninner join `tabDelivery Note Item` DCI on DC.name = DCI.parent\nleft outer join `tabItem` I on I.name = DCI.item_code\nwhere C.name = DC.customer and DC.docstatus = 1 and (DATE(DC.posting_date) BETWEEN %(from_date)s AND %(to_date)s)),0) as \"DC Value:Data:200\"\n\nfrom\n`tabCustomer` C where C.customer_group like \"%%TMS%%\" \n Group by C.name",
+ "ref_doctype": "Sales Invoice",
+ "report_name": "TMS GEARS REPORT",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Employee Self Service"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Engineer SKYTEC"
+  },
+  {
+   "role": "DC Engineer"
+  }
+ ]
+}

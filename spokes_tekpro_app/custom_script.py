@@ -1,0 +1,2237 @@
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.model.mapper import get_mapped_doc
+from frappe.query_builder.functions import Sum
+from frappe.utils import flt, getdate, date_diff, nowtime
+from erpnext.stock.doctype.item.item import get_item_defaults
+import erpnext
+import json
+import os
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+import pandas as pd
+from datetime import datetime, time
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border,Side
+from io import BytesIO
+from frappe import _,msgprint
+from six import string_types, iteritems
+from frappe.utils import flt,now_datetime,cint,cstr,ceil,money_in_words,comma_and,getdate, add_days,nowdate,get_datetime,add_years,add_months,get_first_day,get_last_day
+import csv
+import json
+from hrms.payroll.doctype.payroll_entry.payroll_entry import PayrollEntry
+import calendar
+
+@frappe.whitelist()
+def contact_person_query(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" select parent  from `tabDynamic Link`
+                                  where  link_name='{customer}' and parent in (select name from `tabContact`)""".format(customer = filters.get('customer'),
+                                                                        key = searchfield),{
+                                                                        'txt': "%%%s%%" % txt,
+                                                                        'start': start,
+                                                                        'page_len': page_len
+                                                                                           })
+
+
+@frappe.whitelist()
+def get_customer_for_salesperson(doctype, txt, searchfield, start, page_len, filters):
+	# doc = frappe._dict(json.loads(doc))
+	return frappe.db.sql("""
+		SELECT c.name,c.customer_name
+        FROM `tabCustomer` c
+		inner join `tabSales Team` st on c.name = st.parent
+		where c.disabled = 0 and st.sales_person = '{sales_person}' and
+        (c.{key} LIKE %(txt)s  or c.customer_name like %(txt)s)
+		order by c.customer_name
+        """.format(sales_person = filters.get('employee'),
+            key = searchfield),{
+            'txt': "%%%s%%" % txt,
+            'start': start,
+            'page_len': page_len})
+
+@frappe.whitelist()
+def get_customer_for_visit(doctype, txt, searchfield, start, page_len, filters):
+	# doc = frappe._dict(json.loads(doc))
+	return frappe.db.sql("""
+		SELECT c.name,c.customer_name
+        FROM `tabCustomer` c
+		inner join `tabSales Team` st on c.name = st.parent
+		where c.disabled = 0 and st.sales_person = '{sales_person}' and
+        (c.{key} LIKE %(txt)s  or c.customer_name like %(txt)s)
+		order by c.customer_name
+        """.format(sales_person = filters.get('employee'),
+            key = searchfield),{
+            'txt': "%%%s%%" % txt,
+            'start': start,
+            'page_len': page_len})
+
+@frappe.whitelist()
+def deliverynote_query(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql("""SELECT DISTINCT dn.name,cust.customer_name
+        FROM  `tabDelivery Note` dn join `tabDelivery Note Item` dtl on dtl.parent = dn.name
+	    join  `tabCustomer` cust on cust.name = dn.customer
+        WHERE  dn.name NOT IN (select so.delivery_note FROM `tabSales Order` so where so.delivery_note = dn.name and so.docstatus <> 2) and
+	    dn.docstatus =1 and dn.status != 'Closed' and dn.is_return != 1 and dn.customer = '{customer}' and
+		(dn.{key} LIKE %(txt)s or cust.customer_name like %(txt)s)
+	""".format(
+        key = searchfield,
+        customer= filters.get('customer')
+	#fcond=get_filters_cond(doctype, filters, conditions).replace('%', '%%'),
+	#mcond=get_match_cond(doctype).replace('%', '%%')
+	#month= filters.get('schedulemonth'),
+	#year= filters.get('scheduleyear')
+	),{
+        'txt': "%%%s%%" % txt,
+        'start': start,
+        'page_len': page_len
+    })
+
+@frappe.whitelist()
+def get_items_for_stockplanning(doc):
+	doc = frappe._dict(json.loads(doc))
+	item= frappe.db.sql("""
+		SELECT i.item_code,i.description,i.item_group,wd.type,i.customer_master,i.sales_person_master,
+		(select ig.stocking_factor from `tabItem Group` ig where ig.name = i.item_group) as "stocking_factor",
+		(select b.actual_qty from `tabBin` b where b.item_code = i.item_code and b.warehouse = wd.warehouse) as "closing_stock",
+        ifnull((select sum(sid.qty) from `tabSales Invoice` si
+        inner join `tabSales Invoice Item` sid on sid.parent = si.name
+        inner join `tabSales Team` st on st.parent = si.name
+        where st.sales_person = '{sales_person}' and sid.warehouse =  wd.warehouse and sid.item_code = i.item_code and si.invoice_type = 'Sales Invoice'
+		 and si.status <> 'Cancelled' and si.docstatus = 1 and si.is_return = 0 and (
+		MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) and YEAR(si.posting_date)= YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)))),0)
+		+ ifnull((select sum(dni.qty) from `tabDelivery Note` dn
+		inner join `tabDelivery Note Item` dni on dni.parent = dn.name
+		inner join `tabSales Team` st on st.parent = dn.name
+		where st.sales_person = '{sales_person}' and dni.warehouse = wd.warehouse and dni.item_code = i.item_code and dn.status <> 'Cancelled' and dn.docstatus = 1 and dn.is_return = 0
+		 and (
+		MONTH(dn.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) and YEAR(dn.posting_date)= YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)))),0) as "month_1",
+        ifnull((select sum(sid.qty) from `tabSales Invoice` si
+        inner join `tabSales Invoice Item` sid on sid.parent = si.name
+        inner join `tabSales Team` st on st.parent = si.name
+        where st.sales_person = '{sales_person}' and sid.warehouse =  wd.warehouse and sid.item_code = i.item_code and si.invoice_type = 'Sales Invoice' and si.status <> 'Cancelled' and si.docstatus = 1 and si.is_return = 0
+		and ( MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) and YEAR(si.posting_date) =  YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)))),0) 
+		+ ifnull((select sum(dni.qty) from `tabDelivery Note` dn
+		inner join `tabDelivery Note Item` dni on dni.parent = dn.name
+		inner join `tabSales Team` st on st.parent = dn.name
+		where st.sales_person = '{sales_person}' and dni.warehouse = wd.warehouse and dni.item_code = i.item_code and dn.status <> 'Cancelled'
+		 and dn.docstatus = 1 and dn.is_return = 0 and
+		 ( MONTH(dn.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) and YEAR(dn.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)))),0)as "month_2",
+        ifnull((select sum(sid.qty) from `tabSales Invoice` si
+        inner join `tabSales Invoice Item` sid on sid.parent = si.name
+        inner join `tabSales Team` st on st.parent = si.name
+        where st.sales_person = '{sales_person}' and sid.warehouse =  wd.warehouse and sid.item_code = i.item_code and si.invoice_type = 'Sales Invoice'
+		 and si.status <> 'Cancelled' and si.docstatus = 1 and si.is_return = 0 and
+		( MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) and YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)))),0) 
+		+ ifnull((select sum(dni.qty) from `tabDelivery Note` dn
+		inner join `tabDelivery Note Item` dni on dni.parent = dn.name
+		inner join `tabSales Team` st on st.parent = dn.name
+		where st.sales_person = '{sales_person}' and dni.warehouse = wd.warehouse and dni.item_code = i.item_code and dn.status <> 'Cancelled'
+		 and dn.docstatus = 1 and dn.is_return = 0 and 
+		(MONTH(dn.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) and YEAR(dn.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)))),0)as "month_3",
+	ifnull((select sum(sid.qty) from `tabSales Invoice` si
+        inner join `tabSales Invoice Item` sid on sid.parent = si.name
+        inner join `tabSales Team` st on st.parent = si.name
+        where st.sales_person = '{sales_person}' and sid.warehouse =  wd.warehouse and sid.item_code = i.item_code and si.invoice_type = 'Sales Invoice'
+		  and si.docstatus = 1 and si.is_return = 0 and
+		( MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) and YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)))),0) 
+		+ ifnull((select sum(dni.qty) from `tabDelivery Note` dn
+		inner join `tabDelivery Note Item` dni on dni.parent = dn.name
+		inner join `tabSales Team` st on st.parent = dn.name
+		where st.sales_person = '{sales_person}' and dni.warehouse = wd.warehouse and dni.item_code = i.item_code 
+		 and dn.docstatus = 1 and dn.is_return = 0 and 
+		(MONTH(dn.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) and 
+		YEAR(dn.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)))),0)as "month_4",
+	ifnull((select sum(sid.qty) from `tabSales Invoice` si
+        inner join `tabSales Invoice Item` sid on sid.parent = si.name
+        inner join `tabSales Team` st on st.parent = si.name
+        where st.sales_person = '{sales_person}' and sid.warehouse =  wd.warehouse and sid.item_code = i.item_code and si.invoice_type = 'Sales Invoice'
+		  and si.docstatus = 1 and si.is_return = 0 and
+		( MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)) and YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)))),0) 
+		+ ifnull((select sum(dni.qty) from `tabDelivery Note` dn
+		inner join `tabDelivery Note Item` dni on dni.parent = dn.name
+		inner join `tabSales Team` st on st.parent = dn.name
+		where st.sales_person = '{sales_person}' and dni.warehouse = wd.warehouse and dni.item_code = i.item_code 
+		 and dn.docstatus = 1 and dn.is_return = 0 and 
+		(MONTH(dn.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)) and 
+		YEAR(dn.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)))),0)as "month_5",
+	ifnull((select sum(sid.qty) from `tabSales Invoice` si
+        inner join `tabSales Invoice Item` sid on sid.parent = si.name
+        inner join `tabSales Team` st on st.parent = si.name
+        where st.sales_person = '{sales_person}' and sid.warehouse =  wd.warehouse and sid.item_code = i.item_code and si.invoice_type = 'Sales Invoice'
+		  and si.docstatus = 1 and si.is_return = 0 and
+		( MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)) and YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)))),0) 
+		+ ifnull((select sum(dni.qty) from `tabDelivery Note` dn
+		inner join `tabDelivery Note Item` dni on dni.parent = dn.name
+		inner join `tabSales Team` st on st.parent = dn.name
+		where st.sales_person = '{sales_person}' and dni.warehouse = wd.warehouse and dni.item_code = i.item_code 
+		 and dn.docstatus = 1 and dn.is_return = 0 and 
+		(MONTH(dn.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)) and 
+		YEAR(dn.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)))),0)as "month_6",
+        (select sum(pod.qty - pod.received_qty) from `tabPurchase Order` po
+        inner join `tabPurchase Order Item` pod on pod.parent = po.name
+        where pod.item_code = i.item_code and pod.warehouse = wd.warehouse and po.status not in('Cancelled','Closed') and po.docstatus = 1) as "Po_pending_qty"
+        FROM `tabItem` i
+		inner join `tabWarehouse Details` wd on wd.parent = i.name
+		where i.disabled = 0 and wd.type = "STK" and i.sales_person_master = '{sales_person}' and wd.warehouse = '{warehouse}'
+		order by i.item_code
+        """.format(doc = doc,sales_person=doc.sales_person,date = doc.date,warehouse = doc.warehouse),as_dict=1)
+	return item
+
+@frappe.whitelist()
+def make_order(source_name):
+	doctype = frappe.flags.args.doctype
+
+	def update_doc(source_doc, target_doc, source_parent):
+		if doctype == "Quotation":
+			target_doc.quotation_to = "Customer"
+			target_doc.party_name = source_doc.customer
+
+	def update_item(source, target, source_parent):
+		target_qty = source.get("qty") - source.get("ordered_qty")
+		target.qty = target_qty if not flt(target_qty) < 0 else 0
+		target.price_list_rate = source.get("price_list_rate")
+		# target.margin_type = source.get("margin_type")
+		target.discount_percentage = source.get("discount_percentage")
+		target.discount_amount = source.get("discount_amount")
+		target.rate = source.get("rate")
+		target.amount = source.get("amount")
+		# target.ignore_pricing_rule = 1
+		# target.remarks_1 = "Test"
+		item = get_item_defaults(target.item_code, source_parent.company)
+		if item:
+			target.item_name = item.get("item_name")
+			target.description = item.get("description")
+			target.uom = item.get("stock_uom")
+			target.price_list_rate = source.get("price_list_rate")
+			# target.margin_type = source.get("price_list_rate")
+			target.discount_percentage = source.get("discount_percentage")
+			target.discount_amount = source.get("discount_amount")
+			# target.delivery_warehouse = "CHENNAI - ITFD"
+			target.rate = source.get("rate")
+			target.amount = source.get("amount")
+			target.against_blanket_order = 1
+			target.blanket_order = source_name
+			# target.blanket_order_rate = source.get("rate")
+
+	target_doc = get_mapped_doc(
+		"Blanket Order",
+		source_name,
+		{
+			"Blanket Order": {"doctype": doctype, "postprocess": update_doc},
+			"Blanket Order Item": {
+				"doctype": doctype + " Item",
+				"field_map": {"rate": "blanket_order_rate", "discount_percentage": "discount_percentage", "discount_amount": "blanket_order_rate", "parent": "blanket_order"},
+				"postprocess": update_item,
+				"condition": lambda item: (flt(item.qty) - flt(item.ordered_qty)) > 0,
+			},
+		},
+	)
+	target_doc.set_onload("ignore_price_list", True)
+
+	return target_doc
+
+@frappe.whitelist()
+def get_rate_for_salesorder(customer,item_code,doc_name):
+	item = frappe.db.sql("""
+        	SELECT SOI.rate 
+        	FROM `tabSales Order` SO
+        	INNER JOIN `tabSales Order Item` SOI ON SOI.parent = SO.name
+        	WHERE SO.customer = '{customer}' AND SOI.item_code = '{item_code}' AND SO.docstatus = 1
+        	ORDER BY SO.transaction_date DESC
+        	limit 1
+        	""".format(customer=customer,item_code = item_code),as_dict=1)
+	return item
+
+
+
+@frappe.whitelist()
+def get_customer_for_monthlytarget(doc):
+	doc = frappe._dict(json.loads(doc))
+	customer= frappe.db.sql("""
+        SELECT
+        C.name AS "customer",
+        C.customer_name AS "customer_name",
+        IFNULL(
+            (SELECT SUM(SI.total) 
+            FROM `tabSales Invoice` SI
+            INNER JOIN `tabSales Team` st ON st.parent = SI.name
+            WHERE SI.customer = C.name
+            AND SI.status <> 'Cancelled'
+            AND SI.docstatus = 1
+            AND SI.is_return = 0
+            AND 
+		(MONTH(SI.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) and YEAR(SI.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)))
+            ), 0
+        ) AS "month_1",
+        IFNULL(
+            (SELECT SUM(SI1.total) 
+            FROM `tabSales Invoice` SI1
+            INNER JOIN `tabSales Team` st1 ON st1.parent = SI1.name
+            WHERE SI1.customer = C.name
+            AND SI1.docstatus = 1
+            AND SI1.is_return = 0
+            AND (MONTH(SI1.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) and YEAR(SI1.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)))
+            ), 0
+        ) AS "month_2",
+        IFNULL(
+            (SELECT SUM(SI.total) 
+            FROM `tabSales Invoice` SI
+            INNER JOIN `tabSales Team` st ON st.parent = SI.name
+            WHERE SI.customer = C.name
+            AND SI.status <> 'Cancelled'
+            AND SI.docstatus = 1
+            AND SI.is_return = 0
+	    AND (MONTH(SI.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) and YEAR(SI.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)))
+            ), 0
+        ) AS "month_3"
+        FROM `tabCustomer` C
+        WHERE C.disabled = 0
+        AND C.sales_person = '{sales_person}'
+        """.format(doc = doc,sales_person=doc.sales_person,date = doc.date),as_dict=1)
+	return customer
+
+# @frappe.whitelist()
+# def make_sales_order(source_name: str, target_doc=None):
+# 	# if not frappe.db.get_singles_value(
+# 	# 	"Selling Settings"
+# 	# ):
+# 	# 	quotation = frappe.db.get_value(
+# 	# 		"Quotation", source_name, ["transaction_date", "valid_till"], as_dict=1
+# 	# 	)
+# 	# 	if quotation.valid_till and (
+# 	# 		quotation.valid_till < quotation.transaction_date or quotation.valid_till < getdate(nowdate())
+# 	# 	):
+# 	# 		frappe.throw(_("Validity period of this quotation has ended."))
+
+# 	return _make_sales_order(source_name, target_doc)
+
+
+# def _make_sales_order(source_name, target_doc=None, ignore_permissions=False):
+# 	customer = _make_customer(source_name, ignore_permissions)
+# 	ordered_items = frappe._dict(
+# 		frappe.db.get_all(
+# 			"Sales Order Item",
+# 			{"prevdoc_docname": source_name, "docstatus": 1},
+# 			["item_code", "sum(qty)"],
+# 			group_by="item_code",
+# 			as_list=1,
+# 		)
+# 	)
+
+# 	selected_rows = [x.get("name") for x in frappe.flags.get("args", {}).get("selected_items", [])]
+
+# 	# def set_missing_values(source, target):
+# 	# 	if customer:
+# 	# 		target.customer = customer.name
+# 	# 		target.customer_name = customer.customer_name
+# 	# 	# if source.referral_sales_partner:
+# 	# 	# 	target.sales_partner = source.referral_sales_partner
+# 	# 	# 	target.commission_rate = frappe.get_value(
+# 	# 	# 		"Sales Partner", source.referral_sales_partner, "commission_rate"
+# 	# 	# 	)
+
+# 	# 	# sales team
+# 	# 	for d in customer.get("sales_team"):
+# 	# 		target.append(
+# 	# 			"sales_team",
+# 	# 			{
+# 	# 				"sales_person": d.sales_person,
+# 	# 				"allocated_percentage": d.allocated_percentage or None,
+# 	# 				"commission_rate": d.commission_rate,
+# 	# 			},
+# 	# 		)
+
+# 	# 	target.flags.ignore_permissions = ignore_permissions
+# 	# 	target.run_method("set_missing_values")
+# 	# 	target.run_method("calculate_taxes_and_totals")
+
+# 	def update_item(obj, target, source_parent):
+# 		balance_qty = obj.qty - ordered_items.get(obj.item_code, 0.0)
+# 		target.qty = balance_qty if balance_qty > 0 else 0
+# 		# target.stock_qty = flt(target.qty) * flt(obj.conversion_factor)
+
+# 		# if obj.against_blanket_order:
+# 		# 	target.against_blanket_order = obj.against_blanket_order
+# 		# 	target.blanket_order = obj.blanket_order
+# 		# 	target.blanket_order_rate = obj.blanket_order_rate
+
+# 	# def can_map_row(item) -> bool:
+# 	# 	"""
+# 	# 	Row mapping from Quotation to Sales order:
+# 	# 	1. If no selections, map all non-alternative rows (that sum up to the grand total)
+# 	# 	2. If selections: Is Alternative Item/Has Alternative Item: Map if selected and adequate qty
+# 	# 	3. If selections: Simple row: Map if adequate qty
+# 	# 	"""
+# 	# 	has_qty = item.qty > 0
+
+# 	# 	if not selected_rows:
+# 	# 		return not item.is_alternative
+
+# 	# 	if selected_rows and (item.is_alternative or item.has_alternative_item):
+# 	# 		return (item.name in selected_rows) and has_qty
+
+# 	# 	# Simple row
+# 	# 	return has_qty
+
+# 	doclist = get_mapped_doc(
+# 		"Blanket Order",
+# 		source_name,
+# 		{
+# 			"Blanket Order": {"doctype": "Sales Order", "validation": {"docstatus": ["=", 1]}},
+# 			"Blanket Order Item": {
+# 				"doctype": "Sales Order Item",
+# 				"field_map": {"parent": "prevdoc_docname", "name": "quotation_item"},
+# 				"postprocess": update_item,
+# 				# "condition": can_map_row,
+# 			},
+# 			# "Sales Taxes and Charges": {"doctype": "Sales Taxes and Charges", "add_if_empty": True},
+# 			# "Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
+# 			# "Payment Schedule": {"doctype": "Payment Schedule", "add_if_empty": True},
+# 		},
+# 		target_doc,
+# 		# set_missing_values,
+# 		ignore_permissions=ignore_permissions,
+# 	)
+
+# 	# postprocess: fetch shipping address, set missing values
+# 	doclist.set_onload("ignore_price_list", True)
+
+# 	return doclist
+
+# def _make_customer(source_name, ignore_permissions=False):
+# 	quotation = frappe.db.get_value(
+# 		"Quotation", source_name, ["order_type", "party_name", "customer_name"], as_dict=1
+# 	)
+
+# 	if quotation and quotation.get("party_name"):
+# 		if not frappe.db.exists("Customer", quotation.get("party_name")):
+# 			lead_name = quotation.get("party_name")
+# 			customer_name = frappe.db.get_value(
+# 				"Customer", {"lead_name": lead_name}, ["name", "customer_name"], as_dict=True
+# 			)
+# 			if not customer_name:
+# 				from erpnext.crm.doctype.lead.lead import _make_customer
+
+# 				customer_doclist = _make_customer(lead_name, ignore_permissions=ignore_permissions)
+# 				customer = frappe.get_doc(customer_doclist)
+# 				customer.flags.ignore_permissions = ignore_permissions
+# 				if quotation.get("party_name") == "Shopping Cart":
+# 					customer.customer_group = frappe.db.get_value(
+# 						"E Commerce Settings", None, "default_customer_group"
+# 					)
+
+# 				try:
+# 					customer.insert()
+# 					return customer
+# 				except frappe.NameError:
+# 					if frappe.defaults.get_global_default("cust_master_name") == "Customer Name":
+# 						customer.run_method("autoname")
+# 						customer.name += "-" + lead_name
+# 						customer.insert()
+# 						return customer
+# 					else:
+# 						raise
+# 				except frappe.MandatoryError as e:
+# 					mandatory_fields = e.args[0].split(":")[1].split(",")
+# 					mandatory_fields = [customer.meta.get_label(field.strip()) for field in mandatory_fields]
+
+# 					frappe.local.message_log = []
+# 					lead_link = frappe.utils.get_link_to_form("Lead", lead_name)
+# 					message = (
+# 						_("Could not auto create Customer due to the following missing mandatory field(s):") + "<br>"
+# 					)
+# 					message += "<br><ul><li>" + "</li><li>".join(mandatory_fields) + "</li></ul>"
+# 					message += _("Please create Customer from Lead {0}.").format(lead_link)
+
+# 					frappe.throw(message, title=_("Mandatory Missing"))
+# 			else:
+# 				return customer_name
+# 		else:
+# 			return frappe.get_doc("Customer", quotation.get("party_name"))
+
+@frappe.whitelist()
+def get_saleorder(doc,company,branch,division,from_date,to_date):
+		doc = frappe._dict(json.loads(doc))
+		#so_filter = branch_filter = division_filter = ""
+
+		#if from_date is not 'a':
+		#       so_filter = " and so.transaction_date >= %(from_date)s"
+		#if to_date is not 'a':
+		#       so_filter += " and so.transaction_date <= %(to_date)s"
+		#if company is not 'a':
+		#       so_filter += " and so.company = %(company)s"
+		#if branch is not 'a':
+		#       branch_filter = " and so.branch = %(branch)s"
+		#if division is not 'a':
+		#       division_filter = " and so.division = %(division)s"
+		so= frappe.db.sql("""
+				SELECT so.name,so.transaction_date,so.customer,so.customer_name,soi.item_code,soi.qty,soi.rate,soi.amount,soi.name as dtl_name,so.status,soi.delivered_qty,soi.warehouse,
+				(CASE WHEN (soi.qty - soi.delivered_qty) = 0 THEN 'COMPLETED'
+				WHEN (soi.qty - soi.delivered_qty) = (SELECT b.actual_qty FROM `tabBin` b where b.item_code = soi.item_code and soi.warehouse = b.warehouse) THEN 'BILL'
+				WHEN (SELECT b.actual_qty FROM `tabBin` b where b.item_code = soi.item_code and soi.warehouse = b.warehouse) = 0 THEN 'Follow'
+				WHEN (SELECT b.actual_qty FROM `tabBin` b where b.item_code = soi.item_code and soi.warehouse = b.warehouse) < (soi.qty - soi.delivered_qty) THEN 'BILL and follow'
+				WHEN (SELECT b.actual_qty FROM `tabBin` b where b.item_code = soi.item_code and soi.warehouse = b.warehouse) > (soi.qty - soi.delivered_qty) THEN 'BILL'
+				End) as billing_status,
+				(SELECT b.actual_qty FROM `tabBin` b where b.item_code = soi.item_code and soi.warehouse = b.warehouse) as current_stock
+				FROM `tabSales Order` so
+				inner join `tabSales Order Item` soi on so.name = soi.parent
+				LEFT JOIN `tabSales Invoice Item` sii ON sii.so_detail = soi.name and sii.docstatus = 1
+				where so.docstatus = 1 and so.status not in('Stopped','Closed','On Hold') and so.company = '{company}' and so.branch = '{branch}' and so.division = '{division}'
+				and so.transaction_date >= '{from_date}' and so.transaction_date <= '{to_date}'
+				order by so.name
+		""".format(doc = doc,company = company,branch=branch,division = division,from_date = from_date,to_date = to_date),as_dict=1)
+		return so
+
+@frappe.whitelist(allow_guest=True)
+def generate_invoice(doc,so,sodate,customer,item_code,qty,delivered_qty,si_qty,warehouse,rate,amount,sodtl):
+		doc = frappe._dict(json.loads(doc))
+
+		posting_date = date.today()
+		salesitem = []
+		salestax=[]
+		sono = frappe.get_doc("Sales Order",so)
+		sales =frappe.get_doc({
+					"doctype": "Sales Invoice",
+					"company" : doc.company,
+					"branch"  : doc.branch,
+					"division": doc.division,
+					"posting_date": posting_date,
+					"due_date": posting_date,
+					"customer": customer,
+					"selling_price_list":"Standard Selling",
+					"price_list_currency": "INR",
+					"set_warehouse": warehouse,
+					"update_stock": 1,
+		})
+		for dtl in doc.posting_details:
+				#frappe.msgprint(dtl.so_no);
+				#frappe.msgprint(_(dtl.so_no))
+				if dtl.get("so_no") == so:
+						if dtl.get("billing_status") == "BILL" or dtl.get("billing_status") == "BILL and follow":
+								salesitem.append({ "item_code" : dtl.get("item_code"),
+										"qty" : dtl.get("invoice_qty"),
+										"rate": dtl.get("rate"),
+										"amount": dtl.get("amount"),
+										"warehouse": dtl.get("warehouse"),
+										"sales_order": so,
+										"so_detail": dtl.get("so_dtl")
+										})
+		for so_dtl in sono.taxes:
+				salestax.append({"charge_type" : 'On Net Total',
+						"account_head" : so_dtl.account_head,
+						"description": so_dtl.description,
+						"cost_center": so_dtl.cost_center
+						})
+		sales.set("items",salesitem)
+		sales.set("taxes",salestax)
+		sales.save()
+
+@frappe.whitelist()
+def get_purchase_rate(supplier,item_code,doc_name):
+	items = frappe.db.sql("""
+	 	SELECT POI.rate
+		FROM `tabPurchase Order` PO
+		INNER JOIN `tabPurchase Order Item` POI ON POI.parent = PO.name
+		WHERE PO.supplier = '{supplier}' AND POI.item_code = '{item_code}' AND PO.docstatus = 1
+		ORDER BY PO.transaction_date DESC, PO.name DESC
+		limit 1
+		""".format(supplier=supplier,item_code = item_code),as_dict=1)
+	return items
+
+
+@frappe.whitelist()
+def getdn_query(doctype, txt, searchfield, start, page_len, filters):
+	condi = ''
+	party_item = frappe.get_list('Doctypewise Party Specific Item', filters={'party': filters.get('partyname'), 'company': filters.get('company')})
+	if party_item:
+		condi = 'IN'
+		query = """
+			SELECT I.name, I.description, I.item_group
+			FROM `tabItem` as I
+			WHERE I.name IN (
+				SELECT ID.item
+				FROM `tabItem Details` as ID
+				JOIN `tabDoctypewise Party Specific Item` as D
+				ON ID.parent = D.name
+				WHERE D.party = '{partyname}'
+				AND D.company = '{company}')
+				AND I.{key} LIKE %(txt)s
+		""".format(
+			partyname=filters.get('partyname'),
+			company=filters.get('company'),
+			condi=condi,
+			key=searchfield
+		)
+	else:
+		condi = 'NOT IN'
+		query = """
+			SELECT name, description, item_group
+			FROM `tabItem`
+			WHERE name LIKE %(txt)s
+			LIMIT %(start)s, %(page_len)s
+		"""
+	return frappe.db.sql(query, {'txt': "%%%s%%" % txt, 'start': start, 'page_len': page_len})
+
+
+@frappe.whitelist()
+def get_outstanding_for_customer(doc):
+	doc = frappe._dict(json.loads(doc))
+	outstanding= frappe.db.sql("""
+		SELECT
+		cus.name AS "customer",cus.customer_name AS "customer_name",
+		Ifnull((Select Sum(Si.outstanding_amount) from `tabSales Invoice` Si INNER JOIN `tabSales Team` st ON st.parent = Si.name
+		where Si.customer = cus.name and st.sales_person = '{sales_person}' and Si.docstatus = 1 and Si.is_return != 1),0) as "outstanding",
+		Ifnull((Select Sum(Si.outstanding_amount) from `tabSales Invoice` Si INNER JOIN `tabSales Team` st ON st.parent = Si.name
+		where Si.customer = cus.name and st.sales_person = '{sales_person}' and Si.docstatus = 1 and DATE(Si.due_date) <= '{date}' and 
+		Si.status = 'Overdue' ),0) as "outstanding_one",
+		Ifnull((Select Sum(Si.outstanding_amount) from `tabSales Invoice` Si INNER JOIN `tabSales Team` st ON st.parent = Si.name
+		where Si.customer = cus.name and st.sales_person = '{sales_person}' and Si.docstatus = 1 and DATE(Si.due_date) < LAST_DAY('{date}')),0) as "toutstanding"
+		FROM `tabCustomer` cus
+		WHERE cus.sales_person = '{sales_person}' and cus.disabled = 0
+	""".format(doc = doc,sales_person=doc.sales_person,date = doc.date),as_dict=1)
+	return outstanding
+
+
+
+@frappe.whitelist()
+def get_outstanding_for_customer_1(doc):
+        doc = frappe._dict(json.loads(doc))
+        outstanding1= frappe.db.sql("""
+                SELECT
+                cus.name AS "customer",cus.customer_name AS "customer_name",
+                Ifnull((Select Sum(Si.outstanding_amount) from `tabSales Invoice` Si INNER JOIN `tabSales Team` st ON st.parent = Si.name
+                where Si.customer = cus.name and Si.docstatus = 1 and Si.is_return != 1),0) as "outstanding",
+                (
+        	SELECT IFNULL(SUM(PE.unallocated_amount), 0)
+        	FROM `tabPayment Entry` PE
+        	WHERE PE.docstatus = 1
+        	AND PE.party = cus.name
+        	AND PE.payment_type = 'Receive'
+        	AND DATE(PE.posting_date) <= '{date}'
+    		) +
+    		(
+        	SELECT IFNULL(SUM(JEA.credit_in_account_currency), 0)
+        	FROM `tabJournal Entry` JE
+        	INNER JOIN `tabJournal Entry Account` JEA ON JE.name = JEA.parent
+        	WHERE JE.docstatus = 1
+        	AND JEA.party = cus.name AND JEA.reference_name IS NULL
+        	AND JEA.party_type = 'Customer'
+        	AND DATE(JE.posting_date) <= '{date}'
+    		) AS "on_account",
+
+                Ifnull((Select Sum(Si.outstanding_amount) from `tabSales Invoice` Si INNER JOIN `tabSales Team` st ON st.parent = Si.name
+                where Si.customer = cus.name and Si.docstatus = 1 and DATE(Si.due_date) <= '{date}' and
+                Si.status = 'Overdue' ),0) as "outstanding_one",
+                Ifnull((Select Sum(Si.outstanding_amount) from `tabSales Invoice` Si INNER JOIN `tabSales Team` st ON st.parent = Si.name
+                where Si.customer = cus.name and Si.docstatus = 1 and DATE(Si.due_date) < LAST_DAY('{date}')),0) as "toutstanding"
+                FROM `tabCustomer` cus
+                WHERE cus.sales_person = '{sales_person}' and cus.disabled = 0
+        """.format(doc = doc,sales_person=doc.sales_person,date = doc.date,month=doc.month,year=doc.year),as_dict=1)
+        return outstanding1
+
+
+@frappe.whitelist()
+def createbom(item_code,item_name,item_group,brand,gst_hsn_code,stock_uom,description,customer_master,sales_person_master,tally_description):
+	fitem = frappe.get_doc({
+			"doctype": "Item",
+			"item_code": item_code+ "-" + "F",
+			"item_name": item_code+ "-" + "F",
+			"stock_uom": stock_uom,
+			"item_group": item_group,
+			"brand": brand,
+			"gst_hsn_code": "998898",
+			"is_stock_item": 1,
+			"include_item_in_manufacturing": 0,
+			"description": description,
+			"customer_master":customer_master,
+			"sales_person_master":sales_person_master,
+			"tally_description":tally_description,
+			"is_sub_contracted_item":1,
+			})
+	current_item = frappe.get_doc("Item", item_code)
+	Tax = []
+	for ctaxes in current_item.taxes:
+		item_tax_template = ctaxes.item_tax_template
+		if "18%" in item_tax_template:
+			item_tax_template = item_tax_template.replace("18%", "18%")
+
+		Tax.append({
+			'item_tax_template': item_tax_template,
+			'tax_category': ctaxes.tax_category
+		})
+	fitem.set("taxes", Tax)
+	fitem.save()
+
+	ritem = frappe.get_doc({
+			"doctype": "Item",
+			"item_code": item_code+ "-" + "R",
+			"item_name": item_code+ "-" + "R",
+			"stock_uom": stock_uom,
+			"item_group": item_group,
+			"brand": brand,
+			"gst_hsn_code": "998898",
+			"is_stock_item": 1,
+			"include_item_in_manufacturing": 0,
+			"description": description,
+			"customer_master":customer_master,
+			"sales_person_master":sales_person_master,
+			"tally_description":tally_description,
+			})
+	current_item = frappe.get_doc("Item", item_code)
+	Tax = []
+	for ctaxes in current_item.taxes:
+		item_tax_template = ctaxes.item_tax_template
+		if "18%" in item_tax_template:
+			item_tax_template = item_tax_template.replace("18%", "18%")
+
+		Tax.append({
+			'item_tax_template': item_tax_template,
+			'tax_category': ctaxes.tax_category
+		})
+	ritem.set("taxes", Tax)
+	ritem.save()
+
+	item = frappe.get_doc({
+			"doctype": "Item",
+			"item_code": item_code+ "-" + "S",
+			"item_name": item_code+ "-" + "S",
+			"stock_uom": stock_uom,
+			"item_group": item_group,
+			"brand": brand,
+			"gst_hsn_code": "998898",
+			"is_stock_item": 0,
+			"include_item_in_manufacturing": 0,
+			"description": description,
+			"customer_master":customer_master,
+			"sales_person_master":sales_person_master,
+			"tally_description":tally_description
+			})
+	current_item = frappe.get_doc("Item", item_code)
+	Tax = []
+	for ctaxes in current_item.taxes:
+		item_tax_template = ctaxes.item_tax_template
+		if "18%" in item_tax_template:
+			item_tax_template = item_tax_template.replace("18%", "18%")
+
+		Tax.append({
+			'item_tax_template': item_tax_template,
+			'tax_category': ctaxes.tax_category
+		})
+	item.set("taxes", Tax)
+	item.save()
+
+	BOMdtl=[]
+	BOMinsert = frappe.get_doc({
+			"doctype": "BOM",
+			"item": fitem.name,
+			"uom":stock_uom,
+			"is_active":1,
+			"is_default":1,
+			"set_rate_of_sub_assembly_item_based_on_bom":1,
+			"quantity":1,
+			"currency":"INR",
+			"rm_cost_as_per":"Valuation Rate",
+			"description":description
+		})
+	BOMdtl.append({"item_code": ritem.name,
+				"description" : description,
+				"qty":1,
+				"uom" : stock_uom,
+				"include_item_in_manufacturing" : 1
+			})
+
+	BOMinsert.set("items",BOMdtl)
+	BOMinsert.save()
+	BOMinsert.submit()
+	frappe.db.set_value('Item',item_code, 'item_and_bom_created', 1)
+	frappe.msgprint("Item and BOM Created");
+
+
+@frappe.whitelist()
+def make_mr_reject_entry(self, method):
+	if self.material_request_type != 'Customer Provided':
+		return
+
+	rejected_items = [dtl for dtl in self.items if dtl.rejected_qty > 0]
+
+	if not rejected_items:
+		return
+	stock_entry= frappe.new_doc("Stock Entry")
+	stock_entry.company=self.company
+	stock_entry.stock_entry_type='Material Receipt'
+	stock_entry.reference_document=self.name
+	for dtl in rejected_items:
+		stock_entry.append("items",{
+				"t_warehouse":dtl.rejected_warehouse,
+				"item_code" :dtl.item_code,
+				"uom" : dtl.uom,
+				"qty" :dtl.rejected_qty,
+						#"material_request": dtl.material_request,
+				"allow_zero_valuation_rate" : 0,
+		})
+	stock_entry.save()
+	stock_entry.submit()
+	frappe.db.commit()
+	if stock_entry.stock_entry_type == 'Material Receipt' and stock_entry.reference_document:
+		update_material_request_qty(stock_entry)
+
+def update_material_request_qty(stock_entry):
+	reference_stock_entry = frappe.get_doc("Stock Entry",stock_entry.reference_document)
+	for it_ref in stock_entry.items:
+		if not it_ref.item_code:
+			continue
+		for it in reference_stock_entry.items:
+			if it.item_code == it_ref.item_code and it.material_request:
+				update_ordered_qty(it.material_request, it_ref.item_code, it_ref.qty)
+
+def update_ordered_qty(material_request, item_code, qty):
+	mr_req = frappe.get_doc("Material Request", material_request)
+	for it_mreq in mr_req.items:
+		if it_mreq.item_code == item_code:
+			new_ordered_qty = it_mreq.ordered_qty + qty
+			frappe.db.set_value("Material Request Item", it_mreq.name, "ordered_qty", new_ordered_qty)
+
+			if new_ordered_qty == it_mreq.qty:
+				frappe.db.set_value("Material Request", it_mreq.parent, "per_ordered", "100")
+				frappe.db.set_value("Material Request", it_mreq.parent, "status", "Received")
+
+@frappe.whitelist()
+def upload_to_google_drive(file_path,company_name,current_date,folder_id,gcred):
+	os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = gcred
+	service_account_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if not service_account_file:
+		frappe.throw("Google service account credentials not found in environment variable.")
+	credentials = service_account.Credentials.from_service_account_file(
+		service_account_file, scopes=["https://www.googleapis.com/auth/drive.file"]
+		)
+	service = build("drive", "v3", credentials=credentials)
+	folder_id = folder_id
+	query = f"'{folder_id}' in parents"
+	results = service.files().list(q=query, fields="files(id, name)").execute()
+	files_in_folder = results.get("files", [])
+	if files_in_folder:
+		for file in files_in_folder:
+			service.files().delete(fileId=file["id"]).execute()
+	file_metadata = {
+		"name": f"{company_name}_POSDATA_{current_date}",
+		"parents": [folder_id]
+		}
+	media = MediaFileUpload(file_path, mimetype="text/csv")
+	try:
+		file = service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+		if file:
+			frappe.msgprint(f"File uploaded to Google Drive with ID: {file.get('id')}")
+			return file.get("id")
+		else:
+			frappe.msgprint("File upload failed: No response from Google Drive API.")
+			frappe.log_error("File upload failed: No response from Google Drive API.","Google Drive Upload Error")
+	except Exception as e:
+		error_message = frappe.get_traceback()
+		frappe.log_error(error_message,"Error uploading file to Google Drive")
+
+@frappe.whitelist()
+def report_to_csv(company_name,current_date):
+	report = frappe.get_doc("Report","POS DATA")
+	filter_kenna = {'company': company_name,'from_date': current_date,'to_date': current_date,'brand' :'KENNAMETAL'}
+	filter_widia = {'company': company_name,'from_date': current_date,'to_date': current_date,'brand': 'WIDIA'}
+	#frappe.msgprint(current_date + "-" + company_name)
+	data_kenna = report.get_data(filters = filter_kenna,ignore_prepared_report=True)
+	data_widia = report.get_data(filters = filter_widia,ignore_prepared_report=True)
+	combined_data = data_kenna[1]+ data_widia[1]
+	fieldname_to_label = {field['fieldname']: field['label'] for field in data_kenna[0]}
+	ordered_labels = [field['label'] for field in data_kenna[0]]
+	final_data = [
+	{fieldname_to_label[key]: value for key, value in row.items() if key in fieldname_to_label}
+	for row in combined_data
+	]
+	file_path = os.path.join(frappe.get_site_path(), 'public', 'files','POS_DATA.csv')
+	#file_path = os.path.join(frappe.get_site_path(),'public','POS_DATA.csv')
+	df = pd.DataFrame(data=final_data, columns=ordered_labels)
+	df.to_csv(file_path,index=False)
+	return file_path
+
+@frappe.whitelist()
+def generate_and_upload_report():
+	current_date = datetime.today().strftime('%Y-%m-%d')
+	file_path_itfd = report_to_csv("ITFD PRODUCTS",current_date)
+	if file_path_itfd:
+		drive_settings = frappe.get_doc("Driver Settings")
+		if drive_settings.enabled == 1:
+			for driver in drive_settings.credentials:
+				if driver.company == "ITFD PRODUCTS":
+					folder_id = driver.drive_folder_id
+					gcred = driver.gcred
+					upload_to_google_drive(file_path_itfd,"ITFD PRODUCTS",current_date,folder_id,gcred)
+	file_path_skytec = report_to_csv("SKYTEC SOLUTIONS",current_date)
+	if file_path_skytec:
+		drive_settings = frappe.get_doc("Driver Settings")
+		if drive_settings.enabled == 1:
+			for driver in drive_settings.credentials:
+				if driver.company == "SKYTEC SOLUTIONS":
+					folder_id = driver.drive_folder_id
+					gcred = driver.gcred
+					upload_to_google_drive(file_path_skytec,"SKYTEC SOLUTIONS",current_date,folder_id,gcred)
+
+@frappe.whitelist()
+def create_and_upload_button(company_name,current_date):
+	file_path = report_to_csv(company_name,current_date)
+	if file_path:
+		drive_settings = frappe.get_doc("Driver Settings")
+		if drive_settings.enabled == 1:
+			for driver in drive_settings.credentials:
+				if driver.company == company_name:
+					folder_id = driver.drive_folder_id
+					gcred = driver.gcred
+					upload_to_google_drive(file_path,company_name,current_date,folder_id,gcred)
+
+
+@frappe.whitelist()
+def download_adr_excel(doc):
+	doc = json.loads(doc)
+	status = doc.get("status")
+	if status == "Draft":
+		filename = str(doc.get("name")) + "-" +status+ ".xlsx"
+	else:
+		filename = str(doc.get("name")) + ".xlsx"
+	wb = Workbook()
+	ws = wb.active
+	ws.title = "ADR Report"
+	black = Font(color="FF000000", bold=True)
+	bold = Font(bold=True)
+	center = Alignment(horizontal="center", vertical="center")
+	blue_fill = PatternFill(start_color="003366", end_color="003366",fill_type="solid")
+	white_font = Font(color="FFFFFF", bold=True)
+	border = Border(
+		left=Side(style='thin'),
+		right=Side(style='thin'),
+		top=Side(style='thin'),
+		bottom=Side(style='thin'),
+	)
+	ws.merge_cells('A1:Q1')
+	title_cell = ws['A1']
+	if status == "Draft":
+		title_cell.value = "ADDITIONAL DISCOUNT REQUEST" + "-" + status.upper()
+	else:
+		title_cell.value = "ADDITIONAL DISCOUNT REQUEST"
+	title_cell.font = Font(bold=True, size=14, color="FFFFFF")
+	title_cell.alignment = center
+	title_cell.fill = blue_fill
+
+	ws.append([])
+	ws.append(["Conditions under which additional discount request is proposed:"])
+	for cell in ws[ws.max_row]:
+		cell.font = black
+	conditions = frappe.db.get_all("Condition Applicable",fields = ["sequence","condition_applicable"],order_by="sequence ASC")
+	for row in conditions:
+		ws.append([(row["sequence"] + ") " + row["condition_applicable"])])
+	ws.append([])
+	
+	headers = [
+			"Sl. No.", "Condition Applicable", "Supplier name", "Distributor Name",
+			"Master Material Code", "Product Description", "Grade", "End Customer Name",
+			"List Price (Rs)", "Discount Requested", "Distributor Net Price",
+			"Distributor Price to Customer", "Distributor Margin (%)", "Competitor",
+			"Competitor's Price", "Annual Potential Estimate (Qty)", "First PO Expected Qty"
+			]
+	ws.append(headers)
+	for cell in ws[ws.max_row]:
+		cell.font = white_font
+		cell.fill = blue_fill
+		cell.alignment = center
+		cell.border = border
+	
+	float_columns = [8, 9, 10, 11, 12, 14]
+	for i, row in enumerate(doc.get("adr_details", []), start=1):
+		data_row = [
+			i,
+			row.get("condition_applicable", ""),
+			doc.get("supplier_name", ""),
+			doc.get("company", ""),
+			row.get("item_code", ""),
+			row.get("item_description", ""),
+			row.get("grade", ""),
+			row.get("customer_name", ""),
+			row.get("price_list_rate", ""),
+			str(round(row.get("discount_request", ""),2)) + "%",
+			row.get("distributor_net_price", ""),
+			row.get("distributor_price_to_customer", ""),
+			str(round(row.get("distributor_margin", ""),2)) + "%",
+			row.get("competitor", ""),
+			row.get("competitors_price", ""),
+			row.get("annual_potential_estimate_qty", ""),
+			row.get("first_po_expected_qty", "")
+			]
+		ws.append(data_row)
+		for col_index, cell in enumerate(ws[ws.max_row], start=1):
+			cell.border = border
+			cell.alignment = Alignment(horizontal="left", vertical="top")
+			if col_index - 1 in float_columns:
+				cell.number_format = '0.00'
+		#for cell in ws[ws.max_row]:
+		#	cell.border = border
+		#	cell.alignment = Alignment(horizontal="left",vertical="top")
+	ws.append([])
+	ws.append(["Justification for the ADR request (explain briefly, but effectively in about 2-3 sentences only, enabling take apt decisions):"])
+	for cell in ws[ws.max_row]:
+		cell.font = black
+	justifications = []
+	for row in doc.get("adr_details", []):
+		if row.get("formatted_condition") and row.get("formatted_condition") not in justifications:
+			justifications.append(row["formatted_condition"])
+	for line in justifications:
+		ws.append([line])
+	
+	buffer = BytesIO()
+	wb.save(buffer)
+	buffer.seek(0)
+	
+	
+
+	file_doc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": filename, #ADR_Report.xlsx
+		"content": buffer.getvalue(),
+		"is_private": 1
+	}).insert()
+
+	return {"file_url":file_doc.file_url}
+
+@frappe.whitelist()
+def get_open_dn(sales_person,date,limit_day):
+	open_dn = frappe.db.sql("""
+    				Select d.name,d.posting_date from `tabDelivery Note` d
+				inner join `tabSales Team` st on st.parent = d.name
+				where d.docstatus = 1 and d.status = "To Bill" and st.sales_person = '{sales_person}' and is_return != 1 and 
+				DATEDIFF('{curr_date}', d.posting_date) > '{limit_days}'
+				""".format(sales_person = sales_person,curr_date = date,limit_days = limit_day),as_dict = 1)
+	return open_dn
+
+
+@frappe.whitelist()
+def get_salespersonname(user):
+	sales_person = frappe.db.sql("""
+			select ifnull(SP.name,'') as salesperson  from `tabEmployee` E 
+			left outer join `tabSales Person` SP on SP.employee = E.name where E.user_id = '{user}'
+			""".format(user=user), as_dict=1)
+	if sales_person:
+		return sales_person[0].salesperson
+	else:
+		return ""
+
+@frappe.whitelist()
+def get_customer_for_monthlytarget_by_dsr(dsr):
+    return frappe.db.sql("""
+        SELECT
+            C.name AS customer,
+            C.customer_name AS customer_name,C.location as custom_location
+        FROM `tabCustomer` C
+        WHERE C.disabled = 0
+        AND C.sales_person = %(dsr)s
+    """, {"dsr": dsr}, as_dict=1)
+
+
+
+@frappe.whitelist()
+def beat_plan_details(doc):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else frappe._dict(doc)
+	if not doc.get("beat_plan_retailers"):
+		return []
+
+	retailers = [row.get("retailer") for row in doc.beat_plan_retailers if row.get("retailer")]
+	if not retailers:
+		return []
+
+	dsr = doc.dsr
+	date = doc.beat_plan_date
+
+
+	fy_dates = get_fiscal_year_dates(date)
+	current_fy_start = fy_dates['year_start_date']
+	current_fy_end = fy_dates['year_end_date']
+	previous_fy_start = add_years(current_fy_start, -1)
+	previous_fy_end = add_years(current_fy_end, -1)
+
+	prev_month_start = add_months(get_first_day(date), -1)
+	prev_month_end = add_months(get_last_day(date), -1)
+	curr_month_start = get_first_day(date)
+	curr_month_end = get_last_day(date)
+	
+	sales_data = get_all_sales_data(retailers, dsr, previous_fy_start, previous_fy_end,
+					current_fy_start, current_fy_end,
+					prev_month_start, prev_month_end,
+					curr_month_start, curr_month_end)
+
+	collection_data = get_all_collection_data(retailers, prev_month_start, prev_month_end,
+						curr_month_start, curr_month_end)
+
+
+	retailer_details = []
+	for row in doc.beat_plan_retailers:
+		if not row.get("retailer"):
+			continue
+		retailer = row.get("retailer")
+		retailer_sales = sales_data.get(retailer, {})
+		retailer_collection = collection_data.get(retailer, {})
+
+
+		retailer_details.append({
+					"retailer": retailer,
+					"retailer_name": row.get("retailer_name"),
+					"previous_fy_total_sales": retailer_sales.get("prev_fy", 0),
+					"current_fy_total_sales": retailer_sales.get("curr_fy", 0),
+					"previous_month_sales": retailer_sales.get("prev_month", 0),
+					"current_month_sales": retailer_sales.get("curr_month", 0),
+					"previous_month_collection": retailer_collection.get("prev_month", 0),
+					"current_month_collection": retailer_collection.get("curr_month", 0)
+					})
+	return retailer_details
+
+def get_all_sales_data(retailers, dsr, prev_fy_start, prev_fy_end,curr_fy_start, curr_fy_end, prev_month_start, prev_month_end,curr_month_start, curr_month_end):
+	result = {retailer: {} for retailer in retailers}
+	prev_fy_sales = frappe.db.sql("""
+					SELECT si.customer as retailer, SUM(si.grand_total) as total
+        FROM `tabSales Invoice` si
+        INNER JOIN `tabSales Team` st ON st.parent = si.name
+        WHERE si.docstatus = 1 
+        AND si.customer IN %(retailers)s 
+        AND st.sales_person = %(dsr)s 
+        AND si.posting_date BETWEEN %(from_date)s AND %(to_date)s
+        GROUP BY si.customer
+	""", {
+		"retailers": retailers,
+		"dsr": dsr,
+		"from_date": prev_fy_start,
+		"to_date": prev_fy_end
+	}, as_dict=1)
+	for row in prev_fy_sales:
+		result[row.retailer]["prev_fy"] = row.total
+
+	curr_fy_sales = frappe.db.sql("""
+		SELECT si.customer as retailer, SUM(si.grand_total) as total
+        FROM `tabSales Invoice` si
+        INNER JOIN `tabSales Team` st ON st.parent = si.name
+        WHERE si.docstatus = 1 
+        AND si.customer IN %(retailers)s 
+        AND st.sales_person = %(dsr)s 
+        AND si.posting_date BETWEEN %(from_date)s AND %(to_date)s
+        GROUP BY si.customer
+		""", {
+			"retailers": retailers,
+			"dsr": dsr,
+			"from_date": curr_fy_start,
+			"to_date": curr_fy_end
+			}, as_dict=1)
+
+
+	for row in curr_fy_sales:
+		result[row.retailer]["curr_fy"] = row.total
+
+
+	prev_month_sales = frappe.db.sql("""
+				SELECT si.customer as retailer, SUM(si.grand_total) as total
+        FROM `tabSales Invoice` si
+        INNER JOIN `tabSales Team` st ON st.parent = si.name
+        WHERE si.docstatus = 1 
+        AND si.customer IN %(retailers)s 
+        AND st.sales_person = %(dsr)s 
+        AND si.posting_date BETWEEN %(from_date)s AND %(to_date)s
+        GROUP BY si.customer
+    """, {
+	"retailers": retailers,
+        "dsr": dsr,
+        "from_date": prev_month_start,
+        "to_date": prev_month_end
+	}, as_dict=1)
+
+	for row in prev_month_sales:
+		result[row.retailer]["prev_month"] = row.total
+
+
+	curr_month_sales = frappe.db.sql("""
+					SELECT si.customer as retailer, SUM(si.grand_total) as total
+        FROM `tabSales Invoice` si
+        INNER JOIN `tabSales Team` st ON st.parent = si.name
+        WHERE si.docstatus = 1 
+        AND si.customer IN %(retailers)s 
+        AND st.sales_person = %(dsr)s 
+        AND si.posting_date BETWEEN %(from_date)s AND %(to_date)s
+        GROUP BY si.customer
+	""", {
+		"retailers": retailers,
+	"dsr": dsr,
+	"from_date": curr_month_start,
+	"to_date": curr_month_end
+	}, as_dict=1)
+
+
+	for row in curr_month_sales:
+		result[row.retailer]["curr_month"] = row.total
+
+
+	return result
+
+
+
+def get_all_collection_data(retailers, prev_month_start, prev_month_end, curr_month_start, curr_month_end):
+	result = {retailer: {} for retailer in retailers}
+	prev_month_collections = frappe.db.sql("""
+					SELECT pe.party as retailer, SUM(per.allocated_amount) as total
+        FROM `tabPayment Entry` pe
+        INNER JOIN `tabPayment Entry Reference` per ON per.parent = pe.name
+        WHERE pe.payment_type = "Receive" 
+        AND pe.docstatus = 1 
+        AND pe.party IN %(retailers)s 
+        AND per.reference_doctype = "Sales Invoice"
+        AND pe.posting_date BETWEEN %(from_date)s AND %(to_date)s
+        GROUP BY pe.party
+	""", {
+        "retailers": retailers,
+        "from_date": prev_month_start,
+        "to_date": prev_month_end
+	}, as_dict=1)
+
+	for row in prev_month_collections:
+		result[row.retailer]["prev_month"] = row.total
+
+	curr_month_collections = frappe.db.sql("""
+					SELECT pe.party as retailer, SUM(per.allocated_amount) as total
+        FROM `tabPayment Entry` pe
+        INNER JOIN `tabPayment Entry Reference` per ON per.parent = pe.name
+        WHERE pe.payment_type = "Receive" 
+        AND pe.docstatus = 1 
+        AND pe.party IN %(retailers)s 
+        AND per.reference_doctype = "Sales Invoice"
+        AND pe.posting_date BETWEEN %(from_date)s AND %(to_date)s
+        GROUP BY pe.party
+	""", {
+	"retailers": retailers,
+	"from_date": curr_month_start,
+	"to_date": curr_month_end
+	}, as_dict=1)
+
+
+
+
+	for row in curr_month_collections:
+		result[row.retailer]["curr_month"] = row.total
+	return result
+
+
+
+
+
+
+def get_fiscal_year_dates(date):
+	fiscal_year = frappe.get_value('Fiscal Year',
+			filters={
+            "year_start_date": ["<=", date],
+            "year_end_date": [">=", date],
+            "disabled": 0
+			},
+			fieldname=["year_start_date", "year_end_date"],
+			as_dict=True
+	)
+	return fiscal_year
+
+import frappe
+from frappe.utils import nowdate
+
+@frappe.whitelist()
+def generate_daily_beat_plan():
+    today = nowdate()
+
+    # Get all active sales persons with linked employee
+    active_salespersons = frappe.get_all(
+        "Sales Person",
+        filters={"enabled": 1},
+        fields=["name", "employee"]
+    )
+
+    for sp in active_salespersons:
+        sales_person = sp.name.strip()
+        employee = sp.employee
+
+        # Check if beat plan already exists for today
+        existing_plan = frappe.db.sql(
+            """
+            SELECT name
+            FROM `tabBeat Plan`
+            WHERE LOWER(TRIM(dsr)) = LOWER(%s)
+              AND beat_plan_date = %s
+              AND docstatus < 2
+            LIMIT 1
+            """,
+            (sales_person, today),
+            as_dict=True
+        )
+
+        if existing_plan:
+            frappe.logger().info(f"Beat Plan already exists for {sales_person} on {today}. Skipping.")
+            continue
+
+        # Get customers for this salesperson
+        customers = frappe.get_all(
+            "Customer",
+            filters={"sales_person": sales_person},
+            fields=["name", "customer_name"]
+        )
+
+        if not customers:
+            frappe.logger().info(f"No customers for {sales_person}. Skipping.")
+            continue
+
+        # ✅ Set default company
+        company = None
+        if employee:
+            company = frappe.db.get_value("Employee", employee, "company")
+
+        # ✅ If employee has no company, use global default
+        if not company:
+            company = frappe.db.get_single_value("Global Defaults", "default_company")
+
+        # Create Beat Plan
+        beat_plan = frappe.new_doc("Beat Plan")
+        beat_plan.beat_plan_date = today
+        beat_plan.dsr = sales_person
+        beat_plan.company = company
+        beat_plan.active = 1
+
+        for cust in customers:
+            beat_plan.append("beat_plan_retailers", {
+                "retailer": cust.name,
+                "retailer_name": cust.customer_name,
+                "status": "Planned"
+            })
+
+        beat_plan.insert(ignore_permissions=True)
+        frappe.db.commit()
+
+        frappe.logger().info(f"✅ Beat Plan created for {sales_person} with {len(customers)} customers.")
+
+    frappe.msgprint("✅ Daily Beat Plan generation completed.")
+
+
+
+@frappe.whitelist()
+def employee_checkout():
+        employee_list = frappe.get_list("Employee",
+                                filters = {"status": "Active"},
+                                fields = ['name','employee_name']
+                                )
+        if employee_list:
+                for emp in employee_list:
+                        checkout = frappe.new_doc("Employee Checkin")
+                        checkout.employee = emp.name
+                        checkout.employee_name = emp.employee_name
+                        checkout.time = datetime.combine(datetime.today(), time(20, 0))
+                        checkout.log_type = "OUT"
+                        checkout.insert()
+
+
+def get_user_id_from_sales_person(sales_person):
+    """Fetch user_id from the Employee linked in the Sales Person master"""
+    employee = frappe.db.get_value("Sales Person", sales_person, "employee")
+    if employee:
+        return frappe.db.get_value("Employee", employee, "user_id")
+    return None
+
+
+def get_parent_sales_persons(sales_person):
+    """Recursively get all parent Sales Persons"""
+    parent_list = []
+    parent = frappe.db.get_value("Sales Person", sales_person, "parent_sales_person")
+    while parent:
+        parent_list.append(parent)
+        parent = frappe.db.get_value("Sales Person", parent, "parent_sales_person")
+    return parent_list
+
+
+def create_user_permission(user, customer):
+    """Create User Permission if it doesn't already exist"""
+    if not user:
+        return
+    if not frappe.db.exists("User Permission", {"user": user, "allow": "Customer", "for_value": customer}):
+        perm = frappe.get_doc({
+            "doctype": "User Permission",
+            "user": user,
+            "allow": "Customer",
+            "for_value": customer,
+            "apply_to_all_doctypes": 0,
+            "applicable_for": "Delivery Note"
+        })
+        perm.insert(ignore_permissions=True)
+
+def delete_user_permission(user, customer):
+    """Delete a specific User Permission"""
+    if not user:
+        return
+    perms = frappe.get_all("User Permission", {"user": user, "allow": "Customer", "for_value": customer})
+    for p in perms:
+        frappe.delete_doc("User Permission", p.name, ignore_permissions=True)
+
+
+def get_sales_persons_for_customer(customer):
+    """Return list of Sales Persons assigned in the Customer"""
+    return [d.sales_person for d in frappe.get_all("Sales Team", {"parent": customer}, ["sales_person"])]
+
+
+def manage_customer_user_permissio(doc, method):
+    """Sync Sales Person hierarchy to User Permissions"""
+    customer = doc.name
+    current_sales_persons = [d.sales_person for d in doc.get("sales_team", [])]
+
+    previous_sales_persons = []
+    if not doc.is_new():
+        # get previous saved doc before update
+        old_doc = frappe.get_doc("Customer", doc.name)
+        previous_sales_persons = [d.sales_person for d in old_doc.get("sales_team", [])]
+
+    removed_sales_persons = list(set(previous_sales_persons) - set(current_sales_persons))
+    added_sales_persons = list(set(current_sales_persons) - set(previous_sales_persons))
+
+    # --- Remove permissions for removed sales persons ---
+    for sp in removed_sales_persons:
+        user = get_user_id_from_sales_person(sp)
+        delete_user_permission(user, customer)
+
+        # remove parent permissions if no other child linked to same parent
+        parent_sales = get_parent_sales_persons(sp)
+        for p in parent_sales:
+            still_linked = any(p in get_parent_sales_persons(cs) for cs in current_sales_persons)
+            if not still_linked:
+                parent_user = get_user_id_from_sales_person(p)
+                delete_user_permission(parent_user, customer)
+
+    # --- Add permissions for newly added sales persons ---
+    for sp in added_sales_persons:
+        user = get_user_id_from_sales_person(sp)
+        create_user_permission(user, customer)
+
+        parent_sales = get_parent_sales_persons(sp)
+        for p in parent_sales:
+            parent_user = get_user_id_from_sales_person(p)
+            create_user_permission(parent_user, customer)
+
+
+def manage_customer_user_permissions(doc, method):
+    # Skip if no name yet
+    if not doc.name:
+        return
+
+    # Detect Data Import or Bulk Edit
+    if frappe.flags.in_import or frappe.flags.in_bulk_update:
+        frappe.enqueue("spokes_tekpro_app.custom_script.run_user_permission_sync", customer_name=doc.name)
+        return
+
+    # Normal path (manual create/update)
+    run_user_permission_sync(customer_name=doc.name)
+
+
+@frappe.whitelist()
+def run_user_permission_sync(customer_name):
+    """Runs the actual sync logic safely even if called async."""
+    doc = frappe.get_doc("Customer", customer_name)
+
+    current_sales_persons = [d.sales_person for d in doc.get("sales_team", [])]
+    previous_sales_persons = []
+
+    if not doc.is_new():
+        old_doc = frappe.get_doc("Customer", doc.name)
+        previous_sales_persons = [d.sales_person for d in old_doc.get("sales_team", [])]
+
+    removed_sales_persons = list(set(previous_sales_persons) - set(current_sales_persons))
+    added_sales_persons = list(set(current_sales_persons) - set(previous_sales_persons))
+
+    from spokes_tekpro_app.custom_script import (
+        get_user_id_from_sales_person,
+        get_parent_sales_persons,
+        create_user_permission,
+        delete_user_permission
+    )
+    # Remove permissions
+    for sp in removed_sales_persons:
+        user = get_user_id_from_sales_person(sp)
+        delete_user_permission(user, customer_name)
+
+        for p in get_parent_sales_persons(sp):
+            still_linked = any(p in get_parent_sales_persons(cs) for cs in current_sales_persons)
+            if not still_linked:
+                parent_user = get_user_id_from_sales_person(p)
+                delete_user_permission(parent_user, customer_name)
+
+    # Add permissions
+    for sp in added_sales_persons:
+        user = get_user_id_from_sales_person(sp)
+        create_user_permission(user, customer_name)
+
+        for p in get_parent_sales_persons(sp):
+            parent_user = get_user_id_from_sales_person(p)
+            create_user_permission(parent_user, customer_name)
+
+import frappe
+
+def scheduled_resync_customer_permissions():
+    """Scheduled job: verify and fix customer user permissions every 30 minutes"""
+    frappe.logger().info("Starting scheduled customer user permission resync...")
+
+    customers = frappe.get_all("Customer", pluck="name")
+    for customer in customers:
+        try:
+            validate_and_fix_customer_permissions(customer)
+        except Exception as e:
+            frappe.logger().error(f"Failed resync for {customer}: {e}")
+
+    frappe.logger().info("Completed scheduled customer user permission resync.")
+
+def validate_and_fix_customer_permissions(customer_name):
+    """Compare and fix permissions for a single customer"""
+    from spokes_tekpro_app.custom_script import (
+        get_user_id_from_sales_person,
+        get_parent_sales_persons,
+        create_user_permission,
+        delete_user_permission,
+    )
+
+    skip_sales_persons = ["PRABU C", "KIRUBAKARAN T"]
+
+    is_enabled = frappe.db.get_value("Customer", customer_name, "disabled")
+    if is_enabled:  # disabled = 1 means inactive
+        frappe.logger().info(f"Skipping disabled Customer {customer_name}")
+        return
+
+    doc = frappe.get_doc("Customer", customer_name)
+
+    # Collect all sales persons from Sales Team
+    sales_persons = [d.sales_person for d in doc.get("sales_team", [])]
+    all_expected_users = set()
+
+    # Gather all expected users (sales person + parent chain)
+    for sp in sales_persons:
+        if sp.strip().lower() in [s.lower() for s in skip_sales_persons]:
+            frappe.logger().info(f"Skipping Sales Person {sp} for {customer_name}")
+            continue
+
+        sp_doc = frappe.get_value("Sales Person", sp, ["enabled"], as_dict=True)
+        if not sp_doc or not sp_doc.enabled:
+            frappe.logger().info(f"Skipping disabled Sales Person {sp} for {customer_name}")
+            continue
+
+        user = get_user_id_from_sales_person(sp)
+        if user:
+            all_expected_users.add(user)
+
+        parent_sales = get_parent_sales_persons(sp)
+        for p in parent_sales:
+            # Skip if in skip list
+            if p.strip().lower() in [s.lower() for s in skip_sales_persons]:
+                frappe.logger().info(f"Skipping parent Sales Person {p} for {customer_name}")
+                continue
+
+        # Add parent sales persons’ users
+        parent_sales = get_parent_sales_persons(sp)
+        for p in parent_sales:
+            parent_user = get_user_id_from_sales_person(p)
+            if parent_user:
+                all_expected_users.add(parent_user)
+    # Get all current user permissions for this customer
+    existing_perms = frappe.get_all(
+        "User Permission",
+        filters={"allow": "Customer", "for_value": customer_name},
+        fields=["name", "user"],
+    )
+    existing_users = {p.user for p in existing_perms}
+
+    # --- Find differences ---
+    missing_users = all_expected_users - existing_users
+    extra_users = existing_users - all_expected_users
+
+    # --- Delete incorrect permissions ---
+    for perm in existing_perms:
+        if perm.user in extra_users:
+            delete_user_permission(perm.user, customer_name)
+            frappe.logger().info(f"Removed invalid permission for {perm.user} → {customer_name}")
+
+    # --- Add missing permissions ---
+    for user in missing_users:
+        create_user_permission(user, customer_name)
+        frappe.logger().info(f"Added missing permission for {user} → {customer_name}")
+
+@frappe.whitelist()
+def get_adr_details(supplier,item_code,company):
+	adr_details = frappe.db.sql("""
+	 	SELECT ad.condition_applicable,ad.discount_request,ad.distributor_net_price,ad.distributor_price_to_customer,ad.distributor_margin,ad.customer
+FROM `tabADR` adr
+INNER JOIN `tabADR Details` ad ON ad.parent = adr.name
+WHERE adr.supplier = '{supplier}'
+AND adr.company='{company}'
+  AND ad.item_code = '{item_code}'
+  AND adr.docstatus = 1
+ORDER BY adr.date DESC, adr.name DESC
+		limit 1
+		""".format(supplier=supplier,company=company,item_code = item_code),as_dict=1)
+	return adr_details
+
+
+@frappe.whitelist()
+def recreate_accrual_jv_for_payroll(payroll_entry_name):
+    payroll_entry = frappe.get_doc("Payroll Entry", payroll_entry_name)
+    payroll_entry.check_permission("write")
+
+    # Get all submitted Salary Slips
+    salary_slips = frappe.db.get_all(
+        "Salary Slip",
+        filters={"payroll_entry": payroll_entry.name, "docstatus": 1},
+        pluck="name"
+    )
+
+    if not salary_slips:
+        frappe.throw("No submitted Salary Slips found for this Payroll Entry.")
+
+    submitted_docs = [frappe.get_doc("Salary Slip", s) for s in salary_slips]
+
+    # Create the Accrual JV
+    payroll_entry.make_accrual_jv_entry(submitted_docs)
+
+
+import frappe
+from frappe.utils import getdate, nowdate
+from datetime import datetime, timedelta
+
+@frappe.whitelist()
+def get_absent_counts(employee):
+    today = getdate(nowdate())
+    month = today.month
+    year = today.year
+
+    # Determine fiscal year range (April–March)
+    if month >= 4:
+        fy_start = f"{year}-04-01"
+        fy_end = f"{year + 1}-03-31"
+    else:
+        fy_start = f"{year - 1}-04-01"
+        fy_end = f"{year}-03-31"
+
+    # Get holiday list of employee
+    holiday_list = frappe.db.get_value("Employee", employee, "holiday_list")
+    
+    def get_holidays(start, end):
+        if not holiday_list:
+            return set()
+        return set(
+            frappe.db.get_all(
+                "Holiday",
+                filters={"parent": holiday_list, "holiday_date":  ["<=", month_end]},
+                pluck="holiday_date"
+            )
+        )
+
+    # Get attendance map
+    def get_attendance_map(start, end):
+        records = frappe.db.get_all(
+            "Attendance",
+            filters={"employee": employee, "attendance_date":  ["<=", month_end]},
+            fields=["attendance_date", "status"]
+        )
+        return {r["attendance_date"]: r["status"] for r in records}
+
+    # Function to calculate absent count
+    def compute_absent(start, end):
+        holidays = get_holidays(start, end)
+        attendance_map = get_attendance_map(start, end)
+
+        start_dt = datetime.strptime(start, "%Y-%m-%d")
+        end_dt = datetime.strptime(end, "%Y-%m-%d")
+
+        absent = 0
+        day = start_dt
+        today_date = today
+        while day <= end_dt and day.date() <= today_date:
+            d = day.date()
+
+            # Skip if in holiday list
+            if d in holidays:
+                day += timedelta(days=1)
+                continue
+
+            if d in attendance_map:
+                if attendance_map[d] in ("Absent", "On Leave"):
+                    absent += 1
+            else:
+                # Working day but no attendance entry
+                absent += 1
+
+            day += timedelta(days=1)
+
+        return absent
+
+    # Current month range
+    month_last_day = calendar.monthrange(year, month)[1]
+    month_start = f"{year}-{month:02d}-01"
+    month_end = today.strftime("%Y-%m-%d")
+
+    month_absent_count = compute_absent(month_start, month_end)
+    fy_absent_count = compute_absent(fy_start, fy_end)
+
+    return {
+        "employee": employee,
+        "month_absent_count": month_absent_count,
+        "fy_absent_count": fy_absent_count,
+    }
+
+@frappe.whitelist()
+def get_analysis_data(from_date, to_date, company):
+
+    conditions = """
+        AND soi.delivery_date BETWEEN %(from_date)s AND %(to_date)s
+        AND so.company = %(company)s
+        AND (soi.qty - soi.delivered_qty) > 0
+        AND COALESCE(NULLIF(soi.custom_dispatch_instructions,''), so.dispatch_instructions) = 'ANY QTY'
+    """
+
+    data = frappe.db.sql(
+        """
+        SELECT
+            so.transaction_date AS date,
+            soi.delivery_date,
+            so.name AS sales_order,
+            so.status,
+
+            so.customer,
+            so.customer_name,
+            cus.customer_group,
+
+            soi.item_code,
+            soi.description,
+            COALESCE(NULLIF(soi.custom_dispatch_instructions, ''), so.dispatch_instructions) as dispatch_instructions,
+            soi.name as so_name,soi.qty,
+            soi.qty - soi.delivered_qty as pendingqty,
+            IFNULL(SUM(sii.qty), 0) AS billed_qty,
+            (soi.qty - IFNULL(SUM(sii.qty), 0)) AS qty_to_bill,
+            soi.warehouse as warehouse,
+            IFNULL(b.actual_qty, 0) AS current_stock,
+
+            CASE
+                WHEN (soi.qty - IFNULL(SUM(sii.qty), 0)) = IFNULL(b.actual_qty, 0)
+                    THEN 'BILL'
+                WHEN IFNULL(b.actual_qty, 0) < (soi.qty - IFNULL(SUM(sii.qty), 0))
+                    THEN 'BILL and follow'
+                WHEN IFNULL(b.actual_qty, 0) > (soi.qty - IFNULL(SUM(sii.qty), 0))
+                    THEN 'BILL'
+            END AS billing_status,
+
+            CASE
+                WHEN cus.credit_lock = 1 THEN
+                    CASE
+                        WHEN cus.payment_terms IN ('IMMEDIATE', 'ADVANCE')
+                            THEN 'Lock'
+                        ELSE
+                            CASE
+                                WHEN
+                                    (
+                                        PTD.credit_days
+                                        + cus.grace_period_days
+                                        + CASE
+                                            WHEN CURDATE() < cus.valid_upto
+                                                THEN cus.extra_grace_period
+                                            ELSE 0
+                                          END
+                                    )
+                                    <
+                                    DATEDIFF(
+                                        CURDATE(),
+                                        (
+                                            SELECT si.posting_date
+                                            FROM `tabSales Invoice` si
+                                            WHERE si.customer = so.customer
+                                              AND si.docstatus = 1
+                                              AND si.status = 'Overdue'
+                                            ORDER BY si.creation ASC
+                                            LIMIT 1
+                                        )
+                                    )
+                                THEN 'Lock'
+                                ELSE 'Unlock'
+                            END
+                    END
+                ELSE 'Unlock'
+            END AS credit_lock,
+
+            so.company,
+            soi.warehouse, IFNULL(
+    (
+        SELECT SUM(s.reserved_qty - s.delivered_qty)
+        FROM `tabStock Reservation Entry` s
+        WHERE s.voucher_no = so.name
+            AND s.voucher_detail_no = soi.name
+            AND soi.item_code = s.item_code
+            AND soi.warehouse = s.warehouse
+            AND s.status IN ('Reserved', 'Partially Reserved','Partially Delivered')
+    ),
+    0
+) AS reserved_stock
+
+        FROM `tabSales Order` so
+
+        INNER JOIN `tabSales Order Item` soi
+            ON soi.parent = so.name
+
+        LEFT JOIN `tabSales Invoice Item` sii
+            ON sii.so_detail = soi.name
+           AND sii.docstatus = 1
+
+        LEFT JOIN `tabCustomer` cus
+            ON cus.name = so.customer
+
+        LEFT JOIN `tabPayment Terms Template` PTT
+            ON PTT.name = cus.payment_terms
+	LEFT JOIN `tabPayment Terms Template Detail` PTD On PTD.parent = PTT.name
+        LEFT JOIN `tabBin` b
+            ON b.item_code = soi.item_code
+           AND b.warehouse = soi.warehouse
+
+        WHERE
+            so.docstatus = 1
+            AND so.status NOT IN ('Stopped', 'Closed', 'On Hold','Completed')
+            AND cus.disabled = 0
+            {conditions}
+
+        GROUP BY soi.name
+        HAVING
+            current_stock > 0
+            AND credit_lock = 'Unlock'
+            AND billing_status IN ('BILL', 'BILL and follow')
+
+        ORDER BY so.transaction_date ASC, soi.item_code ASC
+        """.format(conditions=conditions),
+
+        {
+            "from_date": from_date,
+            "to_date": to_date,
+            "company": company,
+        },
+
+        as_dict=True
+    )
+
+    return data
+
+
+@frappe.whitelist()
+def get_customer(user):
+    customer = frappe.db.sql("""
+        SELECT IFNULL(E.for_value, '') AS customer
+        FROM `tabUser Permission` E
+        WHERE E.user = %s
+          AND E.allow = 'Customer'
+          AND E.apply_to_all_doctypes = 1
+        LIMIT 1
+    """, (user,), as_dict=1)
+
+    if customer and customer[0].get("customer"):
+        return customer[0]["customer"]
+    return ""
+
+@frappe.whitelist()
+def set_reserve_stock(doc, method):
+    if not doc.transaction_date:
+        return
+
+    for row in doc.items:
+        if row.delivery_date and row.custom_lead_time_in_days is not None:
+            diff_days = date_diff(
+                row.delivery_date,
+                doc.transaction_date
+            )
+            row.reserve_stock = 1 if diff_days <= row.custom_lead_time_in_days else 0
+        else:
+            row.reserve_stock = 0
+
+@frappe.whitelist()
+def auto_reserve_stock():
+    today = nowdate()
+
+    sales_order_items = frappe.db.sql("""
+        SELECT
+            soi.name AS soi_name,
+            soi.parent AS sales_order,
+            soi.item_code,
+            soi.warehouse,
+            soi.qty,
+            soi.delivered_qty,
+            soi.custom_lead_time_in_days AS lead_time_days,
+            soi.delivery_date,
+            so.company,so.creation
+        FROM `tabSales Order Item` soi
+        INNER JOIN `tabSales Order` so ON so.name = soi.parent
+        WHERE
+            so.docstatus = 1 And so.transaction_date > '2026-02-01'
+            AND so.status NOT IN ('Closed', 'Completed')
+            AND soi.delivery_date IS NOT NULL
+            AND soi.custom_lead_time_in_days IS NOT NULL
+            AND (soi.qty - soi.delivered_qty) > 0
+        ORDER BY so.creation ASC
+    """, as_dict=True)
+
+    for row in sales_order_items:
+        process_sales_order_item(row, today)
+
+@frappe.whitelist()
+def process_sales_order_item(row, today):
+
+    diff_days = date_diff(row.delivery_date, today)
+
+    if diff_days < 0:
+        return
+
+    if diff_days > row.lead_time_days:
+        return
+
+    create_stock_reservation(row)
+
+
+@frappe.whitelist()
+def get_reserved_qty(so_item):
+    return frappe.db.sql("""
+        SELECT IFNULL(SUM(reserved_qty), 0)
+        FROM `tabStock Reservation Entry`
+        WHERE
+            voucher_type = 'Sales Order'
+            AND voucher_detail_no = %s
+            AND docstatus = 1
+    """, so_item)[0][0]
+
+@frappe.whitelist()
+def create_stock_reservation(row):
+
+    already_reserved = get_reserved_qty(row.soi_name)
+
+    total_required = row.qty - row.delivered_qty
+    pending_qty = total_required - already_reserved
+
+    if pending_qty <= 0:
+        return
+
+    bin_data = frappe.db.get_value(
+        "Bin",
+        {
+            "item_code": row.item_code,
+            "warehouse": row.warehouse
+        },["actual_qty", "reserved_qty"],as_dict=True
+    ) or {}
+
+    actual_qty = bin_data.get("actual_qty") or 0
+    reserved_qty = bin_data.get("reserved_qty") or 0
+
+    available_qty = actual_qty - reserved_qty
+
+    if not available_qty or available_qty <= 0:
+        return
+
+    reserve_now = min(pending_qty, available_qty)
+
+    if reserve_now <= 0:
+        return
+
+    stock_uom = frappe.db.get_value("Item", row.item_code, "stock_uom")
+
+    sre = frappe.new_doc("Stock Reservation Entry")
+    sre.item_code = row.item_code
+    sre.warehouse = row.warehouse
+    sre.voucher_type = "Sales Order"
+    sre.voucher_no = row.sales_order
+    sre.voucher_detail_no = row.soi_name
+    sre.stock_uom = stock_uom
+    sre.available_qty = available_qty
+    sre.voucher_qty = total_required
+    sre.reserved_qty = reserve_now
+    sre.company = row.company
+    sre.status = "Reserved"
+
+    sre.insert(ignore_permissions=True)
+    sre.submit()
+    frappe.db.set_value("Sales Order Item",row.soi_name,"reserve_stock",1,update_modified=False)
+
+import frappe
+from frappe.utils import nowdate, nowtime, flt
+
+@frappe.whitelist()
+def generate_delivery_notes(docname):
+
+    doc = frappe.get_doc("Generate Delivery Note", docname)
+
+    group_map = {}
+
+    for row in doc.analysis_detail:
+        if not row.customer or not row.item_code or not row.warehouse:
+            continue
+
+        key = row.sales_order
+        group_map.setdefault(key, []).append(row)
+
+    created_dns = []
+    row_dn_map = {}
+
+    for sales_order, rows in group_map.items():
+
+        so_doc = frappe.get_doc("Sales Order", sales_order)
+        dn = frappe.new_doc("Delivery Note")
+        dn.customer = so_doc.customer
+        dn.company = doc.company
+        dn.posting_date = nowdate()
+        dn.posting_time = nowtime()
+        warehouse = rows[0].warehouse
+        dn.set_warehouse = warehouse
+        dn.expecting_billing_date = nowdate()
+        dn.purpose = "BILLING"
+
+        branch, division = frappe.db.get_value(
+            "Customer", so_doc.customer, ["branch", "division"]
+        )
+        dn.branch = branch
+        dn.division = division
+
+        for tax in so_doc.taxes:
+            dn.append("taxes", {
+                "charge_type": tax.charge_type,
+                "account_head": tax.account_head,
+                "description": tax.description,
+                "rate": tax.rate,
+                "cost_center": tax.cost_center
+            })
+        temp_rows = []
+
+        for r in rows:
+
+            delivered_qty = frappe.db.sql("""
+                SELECT IFNULL(SUM(qty),0)
+                FROM `tabDelivery Note Item`
+                WHERE so_detail = %s
+                AND docstatus = 1
+            """, (r.so_detail))[0][0] or 0
+
+            remaining_qty = flt(r.qty) - flt(delivered_qty)
+
+            if remaining_qty <= 0:
+                continue
+
+            so_item = r.so_detail or frappe.db.get_value(
+                "Sales Order Item",
+                {"parent": r.sales_order, "item_code": r.item_code},
+                "name"
+            )
+
+            if not so_item:
+                continue
+
+            so_item_doc = frappe.get_doc("Sales Order Item", so_item)
+
+            dn.append("items", {
+                "item_code": r.item_code,
+                "qty": r.allocate_qty,
+                "uom": so_item_doc.uom,
+                "conversion_factor": so_item_doc.conversion_factor,
+                "stock_uom": so_item_doc.stock_uom,
+                "warehouse": warehouse,
+                "against_sales_order": r.sales_order,
+                "so_detail": so_item,
+
+                "price_list_rate": so_item_doc.price_list_rate,
+                "rate": so_item_doc.rate,
+                "discount_percentage": so_item_doc.discount_percentage,
+                "discount_amount": so_item_doc.discount_amount
+            })
+            temp_rows.append(r)
+
+        if dn.items:
+            dn.insert(ignore_permissions=True)
+            dn.submit()
+            created_dns.append(dn.name)
+
+            for r in temp_rows:
+                row_dn_map[r.name] = dn.name
+
+    if created_dns:
+        log = frappe.new_doc("Delivery Note Log")
+        log.date = frappe.utils.nowdate()
+        log.company = doc.company
+        log.from_date = doc.from_date
+        log.to_date = doc.to_date
+        log.generated_by = frappe.session.user
+
+        log.delivery_notes = ", ".join(created_dns)
+        for row in doc.analysis_detail:
+            dn_name = dn.name
+            log.append("analysis_detail", {
+                 "sales_order": row.sales_order,
+                 "item_code": row.item_code,
+                 "customer": row.customer,
+                 "customer_name": row.customer_name,
+                 "description": row.description,
+                 "warehouse": row.warehouse,
+                 "qty": row.qty,
+                 "pending_qty":row.pending_qty,
+                 "allocate_qty": row.allocate_qty,
+                 "billed_qty": row.billed_qty,
+                 "qty_to_bill":row.qty_to_bill,
+                 "current_stock":row.current_stock,
+                 "delivery_date":row.delivery_date,
+                 "billing_status":row.billing_status,
+                 "credit_lock": row.credit_lock,
+                 "dispatch_instructions":row.dispatch_instructions,
+                 "so_detail": row.so_detail,
+                 "reserved_stock":row.reserved_stock,
+                 "delivery_note": row_dn_map.get(row.name)  
+            })
+        log.insert(ignore_permissions=True)
+
+
+    return created_dns
+
+
+@frappe.whitelist()
+def allocate_stock_on_pr(doc, method):
+    fifo = frappe.db.get_single_value("Document Settings", "fifo_reservation")
+    if not fifo:
+        return
+
+    today = nowdate()
+
+    for pr_item in doc.items:
+        allocate_pr_item(
+            item_code=pr_item.item_code,
+            warehouse=pr_item.warehouse,
+            company=doc.company,
+            today=today,
+            purchase_receipt=doc.name
+        )
+
+@frappe.whitelist()
+def allocate_pr_item(item_code, warehouse, company, today, purchase_receipt=None):
+
+    bin_data = frappe.db.get_value(
+        "Bin",
+        {"item_code": item_code, "warehouse": warehouse},
+        ["actual_qty", "reserved_stock"],
+        as_dict=True
+    ) or {}
+
+    available_qty = (bin_data.get("actual_qty") or 0) - (bin_data.get("reserved_stock") or 0)
+
+    if available_qty <= 0:
+        return
+
+    so_items = frappe.db.sql("""
+        SELECT
+            soi.name AS soi_name,
+            soi.parent AS sales_order,
+            soi.qty,
+            soi.delivered_qty,
+            soi.delivery_date,
+            soi.custom_lead_time_in_days AS lead_time_days,
+            so.creation
+        FROM `tabSales Order Item` soi
+        INNER JOIN `tabSales Order` so ON so.name = soi.parent
+        WHERE
+            so.docstatus = 1
+            AND so.company = %s
+            AND soi.item_code = %s
+            AND soi.warehouse = %s
+            AND (soi.qty - soi.delivered_qty) > 0
+        ORDER BY so.creation ASC
+    """, (company, item_code, warehouse), as_dict=True)
+
+    remaining_qty = available_qty
+
+    for row in so_items:
+        if remaining_qty <= 0:
+            break
+
+        diff_days = date_diff(row.delivery_date, today)
+        if diff_days < 0 or diff_days > row.lead_time_days:
+            continue
+
+        already_reserved = get_reserved_qty(row.soi_name)
+        pending_qty = (row.qty - row.delivered_qty) - already_reserved
+
+        if pending_qty <= 0:
+            continue
+
+        reserve_now = min(pending_qty, remaining_qty)
+
+        create_pr_stock_reservation(row, item_code, warehouse, reserve_now,purchase_receipt)
+        remaining_qty -= reserve_now
+
+@frappe.whitelist()
+def create_pr_stock_reservation(row, item_code, warehouse, reserve_qty, purchase_receipt=None):
+
+    if reserve_qty <= 0:
+        return
+
+    bin_data = frappe.db.get_value(
+        "Bin",
+        {"item_code": item_code, "warehouse": warehouse},
+        ["actual_qty", "reserved_stock"],
+        as_dict=True
+    ) or {}
+    available_qty = (bin_data.get("actual_qty") or 0) - (bin_data.get("reserved_stock") or 0)
+
+    sre = frappe.new_doc("Stock Reservation Entry")
+    sre.item_code = item_code
+    sre.warehouse = warehouse
+    sre.voucher_type = "Sales Order"
+    sre.voucher_no = row.sales_order
+    sre.voucher_detail_no = row.soi_name
+    sre.stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+    sre.available_qty = available_qty
+    sre.voucher_qty = row.qty - row.delivered_qty
+    sre.reserved_qty = reserve_qty
+    sre.company = frappe.db.get_value("Sales Order", row.sales_order, "company")
+    sre.status = "Reserved"
+    sre.from_voucher_no = purchase_receipt
+    sre.from_voucher_type = "Purchase Receipt"
+    sre.custom_purchase_receipt = purchase_receipt
+
+    sre.insert(ignore_permissions=True)
+    sre.submit()
+    frappe.db.set_value("Sales Order Item",row.soi_name,"reserve_stock",1,update_modified=False)
+
+import frappe
+from frappe import _
+from frappe.model.document import Document
+
+@frappe.whitelist()
+def validate_po_qty(doc, method=None):
+    for item in doc.items:
+
+        if not item.purchase_order:
+            continue
+
+        po_qty = frappe.db.get_value(
+            "Purchase Order Item",
+            {
+                "parent": item.purchase_order,
+                "item_code": item.item_code
+            },
+            "qty"
+        ) or 0
+
+        pr_qty = frappe.db.sql("""
+            SELECT IFNULL(SUM(pri.qty), 0)
+            FROM `tabPurchase Receipt Item` pri
+            INNER JOIN `tabPurchase Receipt` pr 
+                ON pr.name = pri.parent
+            WHERE pri.purchase_order = %s
+            AND pri.item_code = %s
+            AND pr.docstatus != 2
+            AND pr.name != %s
+        """, (item.purchase_order, item.item_code, doc.name))[0][0] or 0
+
+        if (pr_qty + item.qty) > po_qty:
+            frappe.throw(_(
+                f"""Row #{item.idx}: 
+                Already received Qty: {pr_qty}
+                PO Qty: {po_qty}
+                You cannot receive more than ordered quantity."""
+            ))

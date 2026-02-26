@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: spokes_visit_app
+Version: 0.0.1
+Summary: spokes_visit_app
+Author: spokes
+Author-email: kirubakaran.t@sybergate.co.in
+Requires-Dist: frappe
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: summary

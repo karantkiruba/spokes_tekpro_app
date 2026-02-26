@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2025-02-03 10:58:23.008663",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "drive_folder",
+  "credential"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "drive_folder",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Drive Folder"
+  },
+  {
+   "fieldname": "credential",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Credential"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-02-03 11:00:10.920960",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Drive Details",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

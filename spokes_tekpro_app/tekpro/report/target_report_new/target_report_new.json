@@ -1,0 +1,63 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2023-04-21 12:47:17.516134",
+ "disable_prepared_report": 0,
+ "disabled": 1,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2023-04-21 13:11:07.382970",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Target Report New",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select\nYTD.customer as \"CUSTOMER\",\nYTD.customer_name as \"CUSTOMER NAME\",\n(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec + YTD.jan + YTD.feb + YTD.mar) as \"Target Full Year\",\n(case when monthname(%(date)s)=\"April\" Then 0 \nwhen monthname(%(date)s)=\"May\" Then round(YTD.apr)\nwhen monthname(%(date)s)=\"June\" Then round(YTD.apr + YTD.may)\nwhen monthname(%(date)s)=\"July\" Then round(YTD.apr + YTD.may + YTD.jun)\nwhen monthname(%(date)s)=\"August\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul)\nwhen monthname(%(date)s)=\"September\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug)\nwhen monthname(%(date)s)=\"October\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep)\nwhen monthname(%(date)s)=\"November\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct)\nwhen monthname(%(date)s)=\"December\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov)\nwhen monthname(%(date)s)=\"January\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec)\nwhen monthname(%(date)s)=\"February\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec + YTD.jan)\nwhen monthname(%(date)s)=\"March\" Then round(YTD.apr + YTD.may + YTD.jun + YTD.jul + YTD.aug + YTD.sep + YTD.oct + YTD.nov + YTD.dec + YTD.jan + YTD.feb)\nElse 0 end) as \"YTD TARGET\",\n(select SUM(SI.total) from `tabSales Invoice` SI\ninner join `tabSales Team` ST on ST.parent = SI.name\nwhere SI.company = %(Company)s and YTD.customer = SI.customer and SI.posting_date >= YT.start_date and SI.posting_date <= %(date)s and SI.docstatus = 1) as \"YTD ACTUAL\",\n(select MTD.amount from `tabMonthly Target` MT\ninner join `tabMonthly Target Details` MTD on MTD.parent = MT.name\nwhere MT.month = monthname(DATE_SUB(%(date)s, INTERVAL 1 MONTH)) and MT.year = (case when monthname(%(date)s) = 'January' then year(DATE_SUB(%(date)s, INTERVAL 1 YEAR)) else year(%(date)s) end) and YTD.customer = MTD.customer and MT.docstatus = 1)\"PREVIOUS MONTH TARGET\",\n(select SUM(SI.total) from `tabSales Invoice` SI\ninner join `tabSales Team` ST on ST.parent = SI.name\nwhere SI.company = %(Company)s and YTD.customer = SI.customer and monthname(SI.posting_date) = monthname(DATE_SUB(%(date)s, INTERVAL 1 MONTH)) and year(SI.posting_date) = (case when monthname(%(date)s) = 'January' then year(DATE_SUB(%(date)s, INTERVAL 1 YEAR)) else year(%(date)s) end) and SI.docstatus = 1) as \"PREVIOUS MONTH ACTUAL\",\n(select MTD.amount from `tabMonthly Target` MT\ninner join `tabMonthly Target Details` MTD on MTD.parent = MT.name\nwhere monthname(%(date)s)= MT.month and year(%(date)s)=MT.year and YTD.customer = MTD.customer and MT.docstatus = 1)\"CURRENT MONTH TARGET\",\n(select SUM(SI.total) from `tabSales Invoice` SI\ninner join `tabSales Team` ST on ST.parent = SI.name\nwhere SI.company = %(Company)s and YTD.customer = SI.customer and monthname(%(date)s)= monthname(SI.posting_date) and year(%(date)s)= year(SI.posting_date) and SI.docstatus = 1) as \"CURRENT MONTH ACTUAL\"\nfrom `tabYearly Target` as YT\ninner join `tabSales Person Yearly Target Details` as YTD on YT.name = YTD.parent\nwhere YT.fiscal_year=%(fiscal_year)s and YT.company=%(Company)s and YT.docstatus = 1\norder by YTD.customer",
+ "ref_doctype": "Yearly Target",
+ "report_name": "Target Report New",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Mgr"
+  },
+  {
+   "role": "Yearly TGT GM"
+  },
+  {
+   "role": "Monthly TGT Engr"
+  },
+  {
+   "role": "Monthly TGT Mgr"
+  },
+  {
+   "role": "Monthly TGT GM"
+  },
+  {
+   "role": "Visit"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "Quotation"
+  }
+ ]
+}

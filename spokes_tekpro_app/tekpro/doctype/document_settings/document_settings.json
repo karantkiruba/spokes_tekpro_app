@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-07-18 15:01:32.590241",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "restrict_overdue_customers_in_sales_invoice",
+  "fifo_reservation"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "restrict_overdue_customers_in_sales_invoice",
+   "fieldtype": "Check",
+   "label": "Restrict Overdue Customers in Sales Invoice"
+  },
+  {
+   "default": "0",
+   "description": "In Purchase Reciept based on Sal FIFO order Stock Reservation to be done.",
+   "fieldname": "fifo_reservation",
+   "fieldtype": "Check",
+   "label": "FIFO Reservation"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-02-06 16:53:49.594146",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Document Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

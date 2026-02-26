@@ -1,0 +1,102 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2025-09-27 17:53:30.720745",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2025-09-29 08:24:00.600988",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Total Stock Summary - LPD",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    b.warehouse AS \"Warehouse:Data:120\",\r\n    i.item_code AS \"Item Code:Link/Item:100\",\r\n    i.description AS \"Description:Data:120\",\r\n    i.item_group AS \"Item Group:Data:120\",\r\n    i.stock_uom AS \"UOM:Data:100\",\r\n    i.customer_master AS \"Customer Master:Data:120\",\r\n    i.sales_person_master AS \"Sales Person Master:Data:120\",\r\n    b.actual_qty AS \"Current Qty:Float:100\",\r\n    (\r\n    SELECT MAX(po.transaction_date)\r\n    FROM `tabPurchase Order` po\r\n    INNER JOIN `tabPurchase Order Item` poi \r\n        ON poi.parent = po.name\r\n    WHERE poi.item_code = i.item_code\r\n      AND po.docstatus = 1\r\n      AND po.is_subcontracted = 0\r\n) AS \"Last Purchase Date:Date\",\r\n    wd.type AS \"Type:Data:80\",CASE WHEN wd.to_be_check = 1 THEN '\u2611\ufe0f' ELSE ' \u2b1c\ufe0f ' END AS \"To Be Check:Data:50\",\r\n    wd.rack AS \"Rack:Data:80\",\r\n    wd.bin AS \"Bin:Data:80\",\r\n\r\n    SUM(CASE WHEN YEAR(si.posting_date) = YEAR(CURDATE()) \r\n         AND MONTH(si.posting_date) = MONTH(CURDATE()) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M0\",\r\n\r\nSUM(CASE WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M1\",\r\n\r\nSUM(CASE WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M2\",\r\n\r\nSUM(CASE WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M3\",\r\n\r\nSUM(CASE WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M4\",\r\n\r\nSUM(CASE WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 5 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M5\",\r\n\r\nSUM(CASE WHEN YEAR(si.posting_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)) \r\n         AND MONTH(si.posting_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 6 MONTH)) \r\n         AND b.warehouse = si.set_warehouse \r\n    THEN sii.qty ELSE 0 END) AS \"M6\",\r\n\r\n     IFNULL(\r\n        (SELECT SUM(pod.qty - pod.received_qty) \r\n         FROM `tabPurchase Order` po\r\n         INNER JOIN `tabPurchase Order Item` pod ON pod.parent = po.name\r\n         WHERE pod.item_code = i.item_code \r\n           AND pod.warehouse = wd.warehouse \r\n           AND po.status NOT IN ('Cancelled', 'Closed') \r\n           AND po.docstatus = 1\r\n           AND po.transaction_date <= CURDATE()\r\n\r\n           ), 0) \r\n    AS \"PO Pending Qty\"\r\n    \r\n  \r\nFROM\r\n    `tabBin` b\r\nINNER JOIN\r\n    `tabItem` i ON b.item_code = i.item_code\r\nINNER JOIN\r\n    `tabWarehouse` w ON w.name = b.warehouse\r\nLEFT JOIN\r\n    `tabWarehouse Details` wd ON wd.parent = i.item_code AND wd.warehouse = b.warehouse\r\nLEFT JOIN\r\n    `tabSales Invoice Item` sii ON sii.item_code = b.item_code\r\nLEFT JOIN\r\n    `tabSales Invoice` si ON si.name = sii.parent AND si.docstatus = 1 AND si.posting_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)\r\n\r\nWHERE\r\n    b.actual_qty != 0\r\n\r\nGROUP BY\r\n    b.warehouse, i.item_code, wd.type, wd.rack, wd.bin\r\n\r\nORDER BY\r\n    i.item_code;\r\n",
+ "ref_doctype": "Stock Entry",
+ "report_name": "Total Stock Summary - LPD",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Manufacturing User"
+  },
+  {
+   "role": "Manufacturing Manager"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "DC Engineer"
+  },
+  {
+   "role": "Sales User Itfd"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "Engineer SKYTEC"
+  },
+  {
+   "role": "DC Manager"
+  },
+  {
+   "role": "Manager"
+  },
+  {
+   "role": "Stock Entry Restrict"
+  },
+  {
+   "role": "Without Stock Entry"
+  },
+  {
+   "role": "Stock Planning Engineer"
+  },
+  {
+   "role": "Stock Entry Access"
+  },
+  {
+   "role": "Subcontract"
+  },
+  {
+   "role": "Stock Entry View"
+  },
+  {
+   "role": "John"
+  }
+ ]
+}

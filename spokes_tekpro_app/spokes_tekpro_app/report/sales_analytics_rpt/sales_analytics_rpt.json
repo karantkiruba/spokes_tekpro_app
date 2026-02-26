@@ -1,0 +1,87 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-10-25 11:53:02.873496",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{\"columns\":[{\"label\":\"Customer\",\"options\":\"Customer\",\"fieldname\":\"entity\",\"fieldtype\":\"Link\",\"width\":140,\"id\":\"entity\",\"name\":\"Customer\",\"editable\":false,\"compareValue\":null},{\"label\":\"Customer Name\",\"fieldname\":\"entity_name\",\"fieldtype\":\"Data\",\"width\":140,\"id\":\"entity_name\",\"name\":\"Customer Name\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"sales_person\",\"fieldtype\":\"Link\",\"label\":\"Sales Person\",\"insert_after_index\":1,\"link_field\":{\"fieldname\":\"entity\",\"names\":{}},\"doctype\":\"Customer\",\"options\":\"Sales Person\",\"width\":100,\"id\":\"sales_person\",\"name\":\"Sales Person\",\"editable\":false,\"compareValue\":null},{\"label\":\"Apr 2025\",\"fieldname\":\"apr_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"apr_2025\",\"name\":\"Apr 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"May 2025\",\"fieldname\":\"may_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"may_2025\",\"name\":\"May 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Jun 2025\",\"fieldname\":\"jun_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"jun_2025\",\"name\":\"Jun 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Jul 2025\",\"fieldname\":\"jul_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"jul_2025\",\"name\":\"Jul 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Aug 2025\",\"fieldname\":\"aug_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"aug_2025\",\"name\":\"Aug 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Sep 2025\",\"fieldname\":\"sep_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"sep_2025\",\"name\":\"Sep 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Oct 2025\",\"fieldname\":\"oct_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"oct_2025\",\"name\":\"Oct 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Nov 2025\",\"fieldname\":\"nov_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"nov_2025\",\"name\":\"Nov 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Dec 2025\",\"fieldname\":\"dec_2025\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"dec_2025\",\"name\":\"Dec 2025\",\"editable\":false,\"compareValue\":null},{\"label\":\"Jan 2026\",\"fieldname\":\"jan_2026\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"jan_2026\",\"name\":\"Jan 2026\",\"editable\":false,\"compareValue\":null},{\"label\":\"Feb 2026\",\"fieldname\":\"feb_2026\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"feb_2026\",\"name\":\"Feb 2026\",\"editable\":false,\"compareValue\":null},{\"label\":\"Mar 2026\",\"fieldname\":\"mar_2026\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"mar_2026\",\"name\":\"Mar 2026\",\"editable\":false,\"compareValue\":null},{\"label\":\"Total\",\"fieldname\":\"total\",\"fieldtype\":\"Float\",\"width\":120,\"id\":\"total\",\"name\":\"Total\",\"editable\":false,\"compareValue\":null}],\"filters\":{\"tree_type\":\"Customer\",\"doc_type\":\"Sales Invoice\",\"value_quantity\":\"Value\",\"from_date\":\"2025-04-01\",\"to_date\":\"2026-03-31\",\"company\":\"ITFD PRODUCTS\",\"range\":\"Monthly\"}}",
+ "letterhead": null,
+ "modified": "2025-10-25 12:06:18.828723",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Sales Analytics Rpt",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Order",
+ "reference_report": "Sales Analytics",
+ "report_name": "Sales Analytics Rpt",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "Supplier CRM"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "Sales User Itfd"
+  },
+  {
+   "role": "ITFD Accounts User"
+  },
+  {
+   "role": "Customer"
+  },
+  {
+   "role": "Engineer SKYTEC"
+  },
+  {
+   "role": "Without Stock Entry"
+  }
+ ],
+ "timeout": 0
+}

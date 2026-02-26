@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-03-11 18:53:49.877215",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "tool_operation_code",
+  "tool_operation_description",
+  "customer",
+  "customer_name",
+  "usage",
+  "column_break_7",
+  "tool_life",
+  "z",
+  "n",
+  "c_cpc",
+  "target_cpc",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "tool_operation_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tool Operation Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tool_operation_description",
+   "fieldtype": "Data",
+   "label": "Tool Operation Description"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "target_cpc",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Target CPC",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "default": "TMSCPC.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "TMSCPC.#####"
+  },
+  {
+   "fieldname": "usage",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Usage",
+   "options": "Single\nMulti"
+  },
+  {
+   "fieldname": "tool_life",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tool Life"
+  },
+  {
+   "fieldname": "z",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Z"
+  },
+  {
+   "fieldname": "n",
+   "fieldtype": "Data",
+   "label": "N"
+  },
+  {
+   "fieldname": "c_cpc",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "C-cpc"
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-04-22 15:46:09.740768",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "TMS Operation CPC",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

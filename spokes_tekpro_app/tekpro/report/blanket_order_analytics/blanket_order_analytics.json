@@ -1,0 +1,42 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2023-12-01 14:33:53.522610",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2025-04-08 12:07:36.229883",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Blanket Order Analytics",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\nBO.company as 'Company',\r\n\r\n  BO.name as \"Blanket Order:Link/Blanket Order:150\",\r\n  BO.from_date as 'From Date',\r\n  BO.to_date as 'To Date',\r\n  CASE WHEN BO.closed = 1 THEN 'Closed' else 'Open' END as \"Status\",\r\n  BO.customer as \"Customer:Link/Customer:120\",\r\n  BO.customer_name as \"Customer Name\",\r\n  BOI.item_code as \"Item Code:Link/Item:120\",\r\n  BOI.description as \"Description\",\r\n  (\r\n       SELECT ICD.ref_code from `tabItem Customer Detail` ICD\r\n    where ICD.parent = BOI.item_code and ICD.customer_name = BO.customer\r\n   \r\n  ) as \"Customer Item Code\",\r\n  IFNULL(BOI.qty,0) as \"Qty:Data:150\",\r\n  IFNULL((select sum(IFNULL(SOI.qty,0)) from `tabSales Order Item` SOI inner join `tabSales Order` TSO on TSO.name = SOI.parent   where SOI.blanket_order = BOI.parent and BOI.item_code = SOI.item_code and TSO.docstatus = 1),0) as \"Converted Qty\"  \r\n  , IFNULL(BOI.qty,0) - IFNULL((select sum(IFNULL(SOI.qty,0)) from `tabSales Order Item` SOI  inner join `tabSales Order` TSO on TSO.name = SOI.parent  where SOI.blanket_order = BOI.parent and BOI.item_code = SOI.item_code and TSO.docstatus = 1),0) as \"Pending Qty\"\r\n , IFNULL((select (IFNULL(SOI.price_list_rate,0)) from `tabSales Order Item` SOI  inner join `tabSales Order` TSO on TSO.name = SOI.parent  where SOI.blanket_order = BOI.parent and BOI.item_code = SOI.item_code and TSO.docstatus = 1 LIMIT 1),0) as \"Unit Price\" \r\n , IFNULL((select (IFNULL(SOI.discount_percentage,0)) from `tabSales Order Item` SOI  inner join `tabSales Order` TSO on TSO.name = SOI.parent  where SOI.blanket_order = BOI.parent and BOI.item_code = SOI.item_code and TSO.docstatus = 1 LIMIT 1),0) as \"Disc in Per \" \r\n , IFNULL((select (IFNULL(SOI.rate,0)) from `tabSales Order Item` SOI  inner join `tabSales Order` TSO on TSO.name = SOI.parent  where SOI.blanket_order = BOI.parent and BOI.item_code = SOI.item_code and TSO.docstatus = 1 LIMIT 1),0) as \"Rate\" \r\n , CASE WHEN (IFNULL(BOI.qty,0) - IFNULL((select sum(IFNULL(SOI.qty,0)) from `tabSales Order Item` SOI  inner join `tabSales Order` TSO on TSO.name = SOI.parent  where SOI.blanket_order = BOI.parent and BOI.item_code = SOI.item_code and TSO.docstatus = 1),0)) <= 0 THEN 'COMPLETED' ELSE 'OPEN' END as \"ITEM STATUS\"\r\n\r\n  \r\nFROM\r\n  `tabBlanket Order` BO\r\nINNER JOIN\r\n  `tabBlanket Order Item` BOI ON BOI.parent = BO.name\r\n  where BO.docstatus =1  \r\n",
+ "ref_doctype": "Blanket Order",
+ "report_name": "Blanket Order Analytics",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "Engineer SKYTEC"
+  },
+  {
+   "role": "DC Engineer"
+  },
+  {
+   "role": "Delivery Note Access"
+  }
+ ]
+}

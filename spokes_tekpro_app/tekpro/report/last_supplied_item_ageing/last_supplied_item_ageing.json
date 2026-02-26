@@ -1,0 +1,124 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2023-08-19 16:20:46.599016",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "mandatory": 1,
+   "options": "Warehouse",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "",
+ "modified": "2024-12-10 16:06:31.354264",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Last Supplied Item Ageing",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    Tab.`ItemCode:Link/Item:120`,\r\n    Tab.`ItemName:Data:130`,\r\n    Tab.`Description:Data:150`,\r\n    Tab.`ItemGroup:Link/Item Group:120`,\r\n    Tab.`Type`,\r\n    Tab.`AvailableQty:Float:130`,\r\n    Tab.`AgeinginDays:Int:130`,\r\n    Tab.`LastSuppliedDate:Date:130`,\r\n    Tab.`Customer:Link/Customer:130`,\r\n    Tab.`LastCustomerName:Data:130`,\r\n    Tab.`EngineerName:Data:130`,\r\n    Tab.`LastPurchaseAge:Int:130`,\r\n    Tab.`LastPurchasedDate:Date:130`,\r\n    Tab.`LastPurchaseInvoiceNumber:Data:130`,\r\n    Tab.`LastPurchaseRate:Currency:130`,\r\n    Tab.`OpeningRate:Currency:130`\r\nFROM (\r\n    SELECT\r\n        i.item_code AS `ItemCode:Link/Item:120`,\r\n        i.item_name AS `ItemName:Data:130`,\r\n        i.description AS `Description:Data:150`,\r\n        i.item_group AS `ItemGroup:Link/Item Group:120`,\r\n        (SELECT IFNULL(sle.qty_after_transaction, 0) FROM `tabStock Ledger Entry` sle WHERE sle.item_code = i.item_code AND sle.warehouse = %(warehouse)s ORDER BY sle.creation DESC LIMIT 1) AS `AvailableQty:Float:130`,\r\n        (SELECT DATEDIFF(CURDATE(), si.posting_date) FROM `tabSales Invoice Item` sii INNER JOIN `tabSales Invoice` si ON si.name = sii.parent WHERE sii.item_code = i.item_code AND si.docstatus = 1 AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `AgeinginDays:Int:130`,\r\n        (SELECT si.posting_date FROM `tabSales Invoice Item` sii INNER JOIN `tabSales Invoice` si ON si.name = sii.parent WHERE sii.item_code = i.item_code AND si.docstatus = 1 AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `LastSuppliedDate:Date:130`,\r\n        (SELECT si.customer FROM `tabSales Invoice Item` sii INNER JOIN `tabSales Invoice` si ON si.name = sii.parent WHERE sii.item_code = i.item_code AND si.docstatus = 1 AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `Customer:Link/Customer:130`,\r\n        (SELECT si.customer_name FROM `tabSales Invoice Item` sii INNER JOIN `tabSales Invoice` si ON si.name = sii.parent WHERE sii.item_code = i.item_code AND si.docstatus = 1 AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `LastCustomerName:Data:130`,\r\n        (SELECT st.sales_person FROM `tabSales Invoice Item` sii INNER JOIN `tabSales Invoice` si ON si.name = sii.parent INNER JOIN \r\n    `tabSales Team` st ON si.name = st.parent WHERE sii.item_code = i.item_code AND si.docstatus = 1 AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `EngineerName:Data:130`,\r\n    (SELECT DATEDIFF(CURDATE(), (SELECT sle.posting_date FROM `tabStock Ledger Entry` sle WHERE sle.item_code = i.item_code AND sle.warehouse = %(warehouse)s and sle.actual_qty >=0 and voucher_type not in ('Sales Invoice','Stock Reconciliation','Stock Entry') ORDER BY sle.creation DESC LIMIT 1)) \r\n        FROM `tabPurchase Invoice Item` sii INNER JOIN `tabPurchase Invoice` si ON si.name = sii.parent WHERE sii.item_code = i.item_code AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `LastPurchaseAge:Int:130`,\r\n        (SELECT sle.posting_date FROM `tabStock Ledger Entry` sle WHERE sle.item_code = i.item_code AND sle.warehouse = %(warehouse)s and sle.actual_qty >=0 and voucher_type not in ('Sales Invoice','Stock Reconciliation','Stock Entry','Delivery Note') ORDER BY sle.creation DESC LIMIT 1) AS `LastPurchasedDate:Date:130`,\r\n        (SELECT si.doc_no FROM `tabPurchase Invoice Item` sii INNER JOIN `tabPurchase Invoice` si ON si.name = sii.parent WHERE sii.item_code = i.item_code AND si.docstatus = 1 AND sii.warehouse = %(warehouse)s AND si.company = %(company)s ORDER BY si.creation DESC LIMIT 1) AS `LastPurchaseInvoiceNumber:Data:130`,\r\n        i.last_purchase_rate AS `LastPurchaseRate:Currency:130`,\r\n        (SELECT sri.valuation_rate FROM `tabStock Reconciliation Item` sri INNER JOIN `tabStock Reconciliation` sr ON sr.name = sri.parent WHERE sri.item_code = i.item_code AND sri.warehouse = %(warehouse)s AND sr.company = %(company)s) AS `OpeningRate:Currency:130`,\r\n        (select WD.type from `tabItem` It inner join `tabWarehouse Details` WD on WD.parent = It.name where It.name = i.name and  WD.warehouse = %(warehouse)s ) as `Type`   \r\n\r\n    FROM `tabItem` i\r\n    WHERE i.disabled = 0\r\n) AS Tab\r\nWHERE Tab.`AvailableQty:Float:130` > 0;\r\n",
+ "ref_doctype": "Item",
+ "report_name": "Last Supplied Item Ageing",
+ "report_script": "",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Item Manager"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "All"
+  },
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Purchase User"
+  },
+  {
+   "role": "Manufacturing User"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Admin ITFD"
+  },
+  {
+   "role": "Manager SKYTEC"
+  },
+  {
+   "role": "Admin SKYTEC"
+  },
+  {
+   "role": "Quotation"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "Manager"
+  },
+  {
+   "role": "Engineer"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "DC Engineer"
+  },
+  {
+   "role": "DC Manager"
+  },
+  {
+   "role": "Supplier CRM"
+  },
+  {
+   "role": "ITFD visit"
+  },
+  {
+   "role": "Sales User Itfd"
+  }
+ ]
+}

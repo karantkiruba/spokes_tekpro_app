@@ -1,0 +1,36 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2023-05-05 05:29:39.163073",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{\"filters\":[[\"Monthly Target\",\"month\",\"=\",\"May\",false]],\"fields\":[[\"name\",\"Monthly Target\"],[\"docstatus\",\"Monthly Target\"],[\"month\",\"Monthly Target\"],[\"branch\",\"Monthly Target\"],[\"sales_person\",\"Monthly Target\"],[\"total_amount\",\"Monthly Target\"]],\"order_by\":\"`tabMonthly Target`.`modified` desc\",\"add_totals_row\":true,\"page_length\":100,\"column_widths\":{\"name\":120,\"docstatus\":120,\"month\":120,\"branch\":155,\"sales_person\":120,\"total_amount\":120},\"group_by\":null}",
+ "modified": "2024-03-18 14:50:28.974624",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Prabu -Monthly Target",
+ "owner": "prabu@skytec.co.in",
+ "prepared_report": 0,
+ "ref_doctype": "Monthly Target",
+ "report_name": "Prabu -Monthly Target",
+ "report_type": "Report Builder",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Yearly TGT Engr"
+  },
+  {
+   "role": "Yearly TGT Mgr"
+  },
+  {
+   "role": "Yearly TGT GM"
+  }
+ ]
+}

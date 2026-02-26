@@ -1,0 +1,62 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2023-06-02 16:00:58.969357",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-11-25 10:57:47.102480",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "NSTK Order Tracking",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    PC.name AS \"PO NUMBER:Link/Purchase Order:120\",\r\n    PC.set_warehouse AS \"WAREHOUSE\",\r\n    PC.owner AS \"Created By\",\r\n    PCT.item_code AS \"ITEM:Link/Item:120\",\r\n    PCT.description AS \"DESCRIPTION\",\r\n    (\r\n        SELECT WD.type\r\n        FROM `tabItem` AS IET\r\n        INNER JOIN `tabWarehouse Details` AS WD ON IET.name = WD.parent\r\n        WHERE IET.item_code = PCT.item_code\r\n        LIMIT 1\r\n    ) AS \"TYPE\",\r\n    (\r\n        SELECT IET.item_group\r\n        FROM `tabItem` AS IET\r\n        WHERE IET.item_code = PCT.item_code\r\n        LIMIT 1\r\n    ) AS \"ITEM GROUP\",\r\n    (\r\n        SELECT IET.sales_person_master\r\n        FROM `tabItem` AS IET\r\n        WHERE IET.item_code = PCT.item_code\r\n        LIMIT 1\r\n    ) AS \"SALES PERSON MASTER:Link/Customer Master:120\",\r\n    (\r\n        SELECT IET.customer_master\r\n        FROM `tabItem` AS IET\r\n        WHERE IET.item_code = PCT.item_code\r\n        LIMIT 1\r\n    ) AS \"CUSTOMER MASTER:Link/Sales Person Master:120\",\r\n    PCT.qty AS \"QTY\",\r\n    PCT.price_list_rate AS \"NET UNIT\",\r\n    PCT.amount AS \"AMOUNT\",\r\n    (\r\n        SELECT SUM(SOI.qty)\r\n        FROM `tabSales Order` AS SO\r\n        INNER JOIN `tabSales Order Item` AS SOI ON SOI.parent = SO.name\r\n        WHERE SOI.item_code = PCT.item_code\r\n            AND SO.docstatus = 1\r\n            AND (DATE(SO.transaction_date) BETWEEN %(from_date)s AND %(to_date)s)\r\n            AND SO.company = %(company)s\r\n            AND SO.set_warehouse = %(warehouse)s\r\n        LIMIT 1\r\n    ) AS \"SALES ORDER QTY\"\r\nFROM\r\n    `tabPurchase Order` AS PC\r\nINNER JOIN `tabPurchase Order Item` AS PCT ON PC.name = PCT.parent\r\nWHERE\r\n    PC.docstatus = 1\r\n    AND (DATE(PC.transaction_date) BETWEEN %(from_date)s AND %(to_date)s)\r\n    AND PC.company = %(company)s\r\n    AND PC.set_warehouse = %(warehouse)s\r\nORDER BY\r\n    PC.name;\r\n",
+ "ref_doctype": "Purchase Order",
+ "report_name": "NSTK Order Tracking",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Purchase Manager"
+  },
+  {
+   "role": "Purchase User"
+  },
+  {
+   "role": "CFO"
+  },
+  {
+   "role": "ITFD Sales User"
+  },
+  {
+   "role": "ITFD Accounts"
+  },
+  {
+   "role": "Engineer ITFD"
+  },
+  {
+   "role": "ITFD Sales Support"
+  },
+  {
+   "role": "Manager ITFD"
+  },
+  {
+   "role": "Sales ITFD"
+  },
+  {
+   "role": "Expense"
+  },
+  {
+   "role": "Sales User Itfd"
+  }
+ ],
+ "timeout": 0
+}

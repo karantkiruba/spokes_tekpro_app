@@ -1,0 +1,8 @@
+// Copyright (c) 2023, spokes and contributors
+// For license information, please see license.txt
+
+frappe.ui.form.on('Doctypewise Party Specific Item', {
+	// refresh: function(frm) {
+
+	// }
+});

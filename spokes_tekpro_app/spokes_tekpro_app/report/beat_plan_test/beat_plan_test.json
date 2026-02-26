@@ -1,0 +1,32 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-11-25 13:46:03.149751",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-11-25 15:38:10.815970",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Beat Plan Test",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT \r\n\t\t\t\tb.retailer as id,\r\n\t\t\t\tb.retailer_name as name,\r\n\t\t\t\tb.status as status,\r\n\t\t\t\tb.check_in,\r\n\t\t\t\tb.check_out,\r\n\t\t\t\tIFNULL((SELECT \r\n                        SUM(CASE WHEN gle.posting_date <= CURDATE() THEN gle.debit - gle.credit END)\r\n                        from `tabGL Entry` gle where gle.party = b.retailer AND gle.party_type = 'Customer' group by gle.party),0) AS outstanding_amount,\r\n    \t\t\tIFNULL((SELECT SUM(paid_amount) FROM `tabPayment Entry` where status = 'Draft' and party = b.retailer),0) AS pending_approval,\r\n\t\t\t\ta.name as doctype,\r\n\t\t\t\tIFNULL(c.long,\"\") as longitude,\r\n\t\t\t\tIFNULL(c.lat ,\"\") as latitude,\r\n\t\t\t\tb.reason,\r\n\t\t\t\t\r\n\t\t\t\t\r\nCASE\r\n    WHEN b.check_in IS NOT NULL AND b.check_out IS NULL THEN \"OUT\"\r\nELSE \"IN\"\r\nEND AS action,\r\nCASE \r\n    WHEN b.check_in IS NOT NULL AND b.check_out IS NULL THEN \"Check Out\"\r\n    ELSE \"Check In\"\r\nEND AS label,\r\n\r\nCase When cus.credit_lock = 1 Then \r\n   Case When cus.payment_terms = 'IMMEDIATE' THEN 'Lock' \r\n        When cus.payment_terms = 'ADVANCE' THEN 'Lock' \r\n   Else\r\n      case when PTD.credit_days + cus.grace_period_days + CASE WHEN  (CURDATE() + 1) < cus.valid_upto THEN cus.extra_grace_period Else 0 \r\n\t\t            end < DATEDIFF((CURDATE() + 1), (SELECT si.posting_date \r\n                                                                            FROM `tabSales Invoice` si \r\n                                                                            WHERE b.retailer = si.customer AND si.docstatus = 1 AND si.status = 'Overdue'\r\n                                                                            ORDER BY si.creation ASC\r\n                                                                            LIMIT 1)) Then  'Lock' Else 'Unlock' End\r\n    End\r\n Else 'Unlock' End as \"Credit Lock Status\",\r\n(SELECT DATEDIFF((CURDATE() + 1), (\r\n            SELECT si.posting_date \r\n            FROM `tabSales Invoice` si \r\n            WHERE b.retailer = si.customer \r\n              AND si.docstatus = 1 \r\n              AND si.status = 'Overdue'\r\n            ORDER BY si.creation ASC\r\n            LIMIT 1\r\n        ))) AS \"age\"\r\n\r\n\r\n\t\t\t\t\r\n\t\t\tFROM `tabBeat Plan` a\r\n\t\t\tINNER JOIN `tabBeat Plan Retailers` b on b.parent = a.name\r\n\t\t\tLEFT JOIN `tabCustomer` cus on cus.name = b.retailer\r\n\t\t\tLEFT JOIN `tabPayment Terms Template` PTT On cus.payment_terms = PTT.name\r\n  LEFT JOIN `tabPayment Terms Template Detail` PTD On PTD.parent = PTT.name\r\n\t\t\tLEFT JOIN `tabLocation` c on c.name = b.retailer_name\r\n\t\t\twhere a.dsr = 'KARTHIKEYAN R'\t\t    \r\n\t\t\tand a.beat_plan_date = CURDATE()\r\n\t\t\torder by b.retailer_name",
+ "ref_doctype": "Beat Plan",
+ "report_name": "Beat Plan Test",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Tapngo Plus"
+  }
+ ],
+ "timeout": 0
+}

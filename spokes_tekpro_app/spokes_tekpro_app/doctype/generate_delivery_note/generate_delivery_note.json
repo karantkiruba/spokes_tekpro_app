@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-30 10:14:01.466988",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "from_date",
+  "company",
+  "column_break_osrt",
+  "to_date",
+  "go",
+  "generate_dn",
+  "section_break_acku",
+  "analysis_detail"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "Delivery From Date"
+  },
+  {
+   "default": "Today",
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "Delivery To Date"
+  },
+  {
+   "fieldname": "column_break_osrt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "go",
+   "fieldtype": "Button",
+   "label": "GO"
+  },
+  {
+   "fieldname": "section_break_acku",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "analysis_detail",
+   "fieldtype": "Table",
+   "label": "Analysis Detail",
+   "options": "Analysis Rpt"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "generate_dn",
+   "fieldtype": "Button",
+   "label": "Generate DN"
+  }
+ ],
+ "grid_page_length": 50,
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-02-12 18:37:05.155446",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Generate Delivery Note",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

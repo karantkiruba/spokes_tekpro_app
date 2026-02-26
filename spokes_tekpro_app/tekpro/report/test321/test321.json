@@ -1,0 +1,69 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2024-06-15 15:18:49.237861",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To_Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "mandatory": 1,
+   "options": "Company",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-06-21 19:31:51.889917",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "test321",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select\r\nAA.CustomerOrLead,\r\nAA.Name,\r\nAA.Division,\r\nAA.Engineer,\r\n(case when AA.Day1 = 0 then '' else AA.Day1 end) as \"1:Data:100\",\r\n(case when AA.Day2 = 0 then '' else AA.Day2 end) as \"2:Data:100\",\r\n(case when AA.Day3 = 0 then '' else AA.Day3 end) as \"3:Data:100\",\r\n(case when AA.Day4 = 0 then '' else AA.Day4 end) as \"4:Data:100\",\r\n(case when AA.Day5 = 0 then '' else AA.Day5 end) as \"5:Data:100\",\r\n(case when AA.Day6 = 0 then '' else AA.Day6 end) as \"6:Data:100\",\r\n(case when AA.Day7 = 0 then '' else AA.Day7 end) as \"7:Data:100\",\r\n(case when AA.Day8 = 0 then '' else AA.Day8 end) as \"8:Data:100\",\r\n(case when AA.Day9 = 0 then '' else AA.Day9 end) as \"9:Data:100\",\r\n(case when AA.Day10 = 0 then '' else AA.Day10 end) as \"10:Data:100\",\r\n(case when AA.Day11 = 0 then '' else AA.Day11 end) as \"11:Data:100\",\r\n(case when AA.Day12 = 0 then '' else AA.Day12 end) as \"12:Data:100\",\r\n(case when AA.Day13 = 0 then '' else AA.Day13 end) as \"13:Data:100\",\r\n(case when AA.Day14 = 0 then '' else AA.Day14 end) as \"14:Data:100\",\r\n(case when AA.Day15 = 0 then '' else AA.Day15 end) as \"15:Data:100\",\r\n(case when AA.Day16 = 0 then '' else AA.Day16 end) as \"16:Data:100\",\r\n(case when AA.Day17 = 0 then '' else AA.Day17 end) as \"17:Data:100\",\r\n(case when AA.Day18 = 0 then '' else AA.Day18 end) as \"18:Data:100\",\r\n(case when AA.Day19 = 0 then '' else AA.Day19 end) as \"19:Data:100\",\r\n(case when AA.Day20 = 0 then '' else AA.Day20 end) as \"20:Data:100\",\r\n(case when AA.Day21 = 0 then '' else AA.Day21 end) as \"21:Data:100\",\r\n(case when AA.Day22 = 0 then '' else AA.Day22 end) as \"22:Data:100\",\r\n(case when AA.Day23 = 0 then '' else AA.Day23 end) as \"23:Data:100\",\r\n(case when AA.Day24 = 0 then '' else AA.Day24 end) as \"24:Data:100\",\r\n(case when AA.Day25 = 0 then '' else AA.Day25 end) as \"25:Data:100\",\r\n(case when AA.Day26 = 0 then '' else AA.Day26 end) as \"26:Data:100\",\r\n(case when AA.Day27 = 0 then '' else AA.Day27 end) as \"27:Data:100\",\r\n(case when AA.Day28 = 0 then '' else AA.Day28 end) as \"28:Data:100\",\r\n(case when AA.Day29 = 0 then '' else AA.Day29 end) as \"29:Data:100\",\r\n(case when AA.Day30 = 0 then '' else AA.Day30 end) as \"30:Data:100\",\r\n(case when AA.Day31 = 0 then '' else AA.Day31 end) as \"31:Data:100\",\r\nAA.Total as \"Total:data:100\"\r\nfrom\r\n(\r\n\r\nSELECT \r\n    CV.customer AS \"CustomerOrLead\",\r\n    CV.customer_name AS \"Name\",\r\n    CV.employee_name AS \"Engineer\",\r\n    CV.division AS \"Division\",\r\n    SUM(CASE WHEN DAY(CV.date) = 1 THEN 1 ELSE 0 END) AS \"Day1\",\r\n    SUM(CASE WHEN DAY(CV.date) = 2 THEN 1 ELSE 0 END) AS \"Day2\",\r\n    SUM(CASE WHEN DAY(CV.date) = 3 THEN 1 ELSE 0 END) AS \"Day3\",\r\n    SUM(CASE WHEN DAY(CV.date) = 4 THEN 1 ELSE 0 END) AS \"Day4\",\r\n    SUM(CASE WHEN DAY(CV.date) = 5 THEN 1 ELSE 0 END) AS \"Day5\",\r\n    SUM(CASE WHEN DAY(CV.date) = 6 THEN 1 ELSE 0 END) AS \"Day6\",\r\n    SUM(CASE WHEN DAY(CV.date) = 7 THEN 1 ELSE 0 END) AS \"Day7\",\r\n    SUM(CASE WHEN DAY(CV.date) = 8 THEN 1 ELSE 0 END) AS \"Day8\",\r\n    SUM(CASE WHEN DAY(CV.date) = 9 THEN 1 ELSE 0 END) AS \"Day9\",\r\n    SUM(CASE WHEN DAY(CV.date) = 10 THEN 1 ELSE 0 END) AS \"Day10\",\r\n    SUM(CASE WHEN DAY(CV.date) = 11 THEN 1 ELSE 0 END) AS \"Day11\",\r\n    SUM(CASE WHEN DAY(CV.date) = 12 THEN 1 ELSE 0 END) AS \"Day12\",\r\n    SUM(CASE WHEN DAY(CV.date) = 13 THEN 1 ELSE 0 END) AS \"Day13\",\r\n    SUM(CASE WHEN DAY(CV.date) = 14 THEN 1 ELSE 0 END) AS \"Day14\",\r\n    SUM(CASE WHEN DAY(CV.date) = 15 THEN 1 ELSE 0 END) AS \"Day15\",\r\n    SUM(CASE WHEN DAY(CV.date) = 16 THEN 1 ELSE 0 END) AS \"Day16\",\r\n    SUM(CASE WHEN DAY(CV.date) = 17 THEN 1 ELSE 0 END) AS \"Day17\",\r\n    SUM(CASE WHEN DAY(CV.date) = 18 THEN 1 ELSE 0 END) AS \"Day18\",\r\n    SUM(CASE WHEN DAY(CV.date) = 19 THEN 1 ELSE 0 END) AS \"Day19\",\r\n    SUM(CASE WHEN DAY(CV.date) = 20 THEN 1 ELSE 0 END) AS \"Day20\",\r\n    SUM(CASE WHEN DAY(CV.date) = 21 THEN 1 ELSE 0 END) AS \"Day21\",\r\n    SUM(CASE WHEN DAY(CV.date) = 22 THEN 1 ELSE 0 END) AS \"Day22\",\r\n    SUM(CASE WHEN DAY(CV.date) = 23 THEN 1 ELSE 0 END) AS \"Day23\",\r\n    SUM(CASE WHEN DAY(CV.date) = 24 THEN 1 ELSE 0 END) AS \"Day24\",\r\n    SUM(CASE WHEN DAY(CV.date) = 25 THEN 1 ELSE 0 END) AS \"Day25\",\r\n    SUM(CASE WHEN DAY(CV.date) = 26 THEN 1 ELSE 0 END) AS \"Day26\",\r\n    SUM(CASE WHEN DAY(CV.date) = 27 THEN 1 ELSE 0 END) AS \"Day27\",\r\n    SUM(CASE WHEN DAY(CV.date) = 28 THEN 1 ELSE 0 END) AS \"Day28\",\r\n    SUM(CASE WHEN DAY(CV.date) = 29 THEN 1 ELSE 0 END) AS \"Day29\",\r\n    SUM(CASE WHEN DAY(CV.date) = 30 THEN 1 ELSE 0 END) AS \"Day30\",\r\n    SUM(CASE WHEN DAY(CV.date) = 31 THEN 1 ELSE 0 END) AS \"Day31\",\r\n    COUNT(*) AS \"Total\"\r\nFROM \r\n    `tabCustomer Visit` AS CV\r\nWHERE \r\n    DATE(CV.date) BETWEEN %(from_date)s AND %(to_date)s\r\n    AND CV.company = %(company)s\r\n    and CV.customer <> ''\r\nGROUP BY \r\n    CV.customer, CV.employee\r\n\r\nunion all \r\nSELECT \r\n    CV.lead AS \"CustomerOrLead\",\r\n    CV.lead_name AS \"Name\",\r\n    CV.employee_name AS \"Engineer\",\r\n    CV.division AS \"Division\",\r\n    SUM(CASE WHEN DAY(CV.date) = 1 THEN 1 ELSE 0 END) AS \"Day1\",\r\n    SUM(CASE WHEN DAY(CV.date) = 2 THEN 1 ELSE 0 END) AS \"Day2\",\r\n    SUM(CASE WHEN DAY(CV.date) = 3 THEN 1 ELSE 0 END) AS \"Day3\",\r\n    SUM(CASE WHEN DAY(CV.date) = 4 THEN 1 ELSE 0 END) AS \"Day4\",\r\n    SUM(CASE WHEN DAY(CV.date) = 5 THEN 1 ELSE 0 END) AS \"Day5\",\r\n    SUM(CASE WHEN DAY(CV.date) = 6 THEN 1 ELSE 0 END) AS \"Day6\",\r\n    SUM(CASE WHEN DAY(CV.date) = 7 THEN 1 ELSE 0 END) AS \"Day7\",\r\n    SUM(CASE WHEN DAY(CV.date) = 8 THEN 1 ELSE 0 END) AS \"Day8\",\r\n    SUM(CASE WHEN DAY(CV.date) = 9 THEN 1 ELSE 0 END) AS \"Day9\",\r\n    SUM(CASE WHEN DAY(CV.date) = 10 THEN 1 ELSE 0 END) AS \"Day10\",\r\n    SUM(CASE WHEN DAY(CV.date) = 11 THEN 1 ELSE 0 END) AS \"Day11\",\r\n    SUM(CASE WHEN DAY(CV.date) = 12 THEN 1 ELSE 0 END) AS \"Day12\",\r\n    SUM(CASE WHEN DAY(CV.date) = 13 THEN 1 ELSE 0 END) AS \"Day13\",\r\n    SUM(CASE WHEN DAY(CV.date) = 14 THEN 1 ELSE 0 END) AS \"Day14\",\r\n    SUM(CASE WHEN DAY(CV.date) = 15 THEN 1 ELSE 0 END) AS \"Day15\",\r\n    SUM(CASE WHEN DAY(CV.date) = 16 THEN 1 ELSE 0 END) AS \"Day16\",\r\n    SUM(CASE WHEN DAY(CV.date) = 17 THEN 1 ELSE 0 END) AS \"Day17\",\r\n    SUM(CASE WHEN DAY(CV.date) = 18 THEN 1 ELSE 0 END) AS \"Day18\",\r\n    SUM(CASE WHEN DAY(CV.date) = 19 THEN 1 ELSE 0 END) AS \"Day19\",\r\n    SUM(CASE WHEN DAY(CV.date) = 20 THEN 1 ELSE 0 END) AS \"Day20\",\r\n    SUM(CASE WHEN DAY(CV.date) = 21 THEN 1 ELSE 0 END) AS \"Day21\",\r\n    SUM(CASE WHEN DAY(CV.date) = 22 THEN 1 ELSE 0 END) AS \"Day22\",\r\n    SUM(CASE WHEN DAY(CV.date) = 23 THEN 1 ELSE 0 END) AS \"Day23\",\r\n    SUM(CASE WHEN DAY(CV.date) = 24 THEN 1 ELSE 0 END) AS \"Day24\",\r\n    SUM(CASE WHEN DAY(CV.date) = 25 THEN 1 ELSE 0 END) AS \"Day25\",\r\n    SUM(CASE WHEN DAY(CV.date) = 26 THEN 1 ELSE 0 END) AS \"Day26\",\r\n    SUM(CASE WHEN DAY(CV.date) = 27 THEN 1 ELSE 0 END) AS \"Day27\",\r\n    SUM(CASE WHEN DAY(CV.date) = 28 THEN 1 ELSE 0 END) AS \"Day28\",\r\n    SUM(CASE WHEN DAY(CV.date) = 29 THEN 1 ELSE 0 END) AS \"Day29\",\r\n    SUM(CASE WHEN DAY(CV.date) = 30 THEN 1 ELSE 0 END) AS \"Day30\",\r\n    SUM(CASE WHEN DAY(CV.date) = 31 THEN 1 ELSE 0 END) AS \"Day31\",\r\n    COUNT(*) AS \"Total\"\r\nFROM \r\n    `tabCustomer Visit` AS CV\r\nWHERE \r\n    DATE(CV.date) BETWEEN %(from_date)s AND %(to_date)s\r\n    AND CV.company = %(company)s\r\n    and CV.lead_name <>''\r\nGROUP BY \r\n    CV.lead, CV.employee\r\n\r\n\r\n\r\n)AA\r\norder by AA.Engineer\r\n ",
+ "ref_doctype": "Customer Visit",
+ "report_name": "test321",
+ "report_script": "",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Admin ITFD"
+  },
+  {
+   "role": "Manager SKYTEC"
+  },
+  {
+   "role": "Admin SKYTEC"
+  },
+  {
+   "role": "Visit"
+  },
+  {
+   "role": "Manager"
+  },
+  {
+   "role": "Engineer"
+  }
+ ]
+}
