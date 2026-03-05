@@ -1,0 +1,270 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-10-01 16:19:00.644979",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "fiscal_year",
+  "start_date",
+  "end_date",
+  "sales_person",
+  "column_break_6",
+  "company",
+  "branch",
+  "division",
+  "approver",
+  "section_break_11",
+  "yearly_target_details",
+  "column_break_20",
+  "total_amount_apr",
+  "total_amount_may",
+  "total_amount_jun",
+  "total_amount_jul",
+  "total_amount_aug",
+  "total_amount_sep",
+  "total_amount",
+  "column_break_21",
+  "total_amount_oct",
+  "total_amount_nov",
+  "total_amount_dec",
+  "total_amount_jan",
+  "total_amount_feb",
+  "total_amount_mar",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Fiscal Year",
+   "options": "Fiscal Year",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "fiscal_year.year_start_date",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "fiscal_year.year_end_date",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_person",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sales Person",
+   "options": "Sales Person",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "remember_last_selected_value": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only_depends_on": "eval:doc.owner!='prabu@skytec.co.in'\n"
+  },
+  {
+   "fieldname": "division",
+   "fieldtype": "Link",
+   "label": "Division",
+   "options": "Division",
+   "read_only_depends_on": "eval:doc.owner!='prabu@skytec.co.in'"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Approver",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_break_11",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "yearly_target_details",
+   "fieldtype": "Table",
+   "label": "Yearly Target Details",
+   "options": "Sales Person Yearly Target Details"
+  },
+  {
+   "fieldname": "column_break_20",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_apr",
+   "fieldtype": "Currency",
+   "label": "Total amount Apr",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_may",
+   "fieldtype": "Currency",
+   "label": "Total amount May",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_jun",
+   "fieldtype": "Currency",
+   "label": "Total amount Jun",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_jul",
+   "fieldtype": "Currency",
+   "label": "Total amount Jul",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_aug",
+   "fieldtype": "Currency",
+   "label": "Total amount Aug",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_sep",
+   "fieldtype": "Currency",
+   "label": "Total amount Sep",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_21",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_oct",
+   "fieldtype": "Currency",
+   "label": "Total amount Oct",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_nov",
+   "fieldtype": "Currency",
+   "label": "Total amount Nov",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_dec",
+   "fieldtype": "Currency",
+   "label": "Total amount Dec",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_jan",
+   "fieldtype": "Currency",
+   "label": "Total amount Jan",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_feb",
+   "fieldtype": "Currency",
+   "label": "Total amount Feb",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount_mar",
+   "fieldtype": "Currency",
+   "label": "Total amount Mar",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Yearly Target",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-02-27 15:04:13.985946",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Yearly Target",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

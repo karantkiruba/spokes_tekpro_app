@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "creation": "2025-10-01 16:19:00.443364",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "customer_name",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+  "jan",
+  "feb",
+  "mar",
+  "total_amount"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "apr",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Apr",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "may",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "May",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "jun",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Jun",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "jul",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Jul",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "aug",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Aug",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "sep",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Sep",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "oct",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Oct",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "nov",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Nov",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "dec",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Dec",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "jan",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Jan",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "feb",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Feb",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "mar",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Mar",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-27 15:02:59.076954",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Sales Person Yearly Target Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,161 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2025-10-01 16:19:01.245979",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "so_no",
+  "so_date",
+  "customer",
+  "customer_name",
+  "item_code",
+  "qty",
+  "delivered_qty",
+  "invoice_qty",
+  "current_stock",
+  "rate",
+  "amount",
+  "so_status",
+  "billing_status",
+  "warehouse",
+  "so_dtl",
+  "generate_invoice"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "so_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "SO No",
+   "options": "Sales Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "so_date",
+   "fieldtype": "Date",
+   "label": "SO Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "delivered_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Delivered Qty",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "invoice_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty to Bill",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "current_stock",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Current Stock",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "so_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "SO Status",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "billing_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Billing Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "so_dtl",
+   "fieldtype": "Data",
+   "label": "SO Dtl",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "generate_invoice",
+   "fieldtype": "Button",
+   "in_list_view": 1,
+   "label": "Generate Invoice"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-27 15:02:59.459944",
+ "modified_by": "Administrator",
+ "module": "tekpro",
+ "name": "Posting Detail",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
