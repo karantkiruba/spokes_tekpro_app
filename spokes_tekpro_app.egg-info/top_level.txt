@@ -1,1 +1,1 @@
-spokes_visit_app
+spokes_tekpro_app

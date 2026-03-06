@@ -10,13 +10,16 @@
   "opportunity",
   "trial_date",
   "customer_name",
+  "production_per_month",
   "column_break_1pqu",
   "machine_name",
   "engineer_name",
   "component_name",
+  "trial_conclusion",
   "section_break_vpv2",
   "trial_detail",
-  "amended_from"
+  "amended_from",
+  "remark"
  ],
  "fields": [
   {
@@ -59,7 +62,7 @@
    "label": "Engineer Name"
   },
   {
-   "fetch_from": "opportunity.component_name",
+   "fetch_from": "opportunity.custom_component_name",
    "fieldname": "component_name",
    "fieldtype": "Data",
    "label": "Component Name"
@@ -83,13 +86,29 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "production_per_month",
+   "fieldtype": "Int",
+   "label": "Production Per Month"
+  },
+  {
+   "fieldname": "trial_conclusion",
+   "fieldtype": "Select",
+   "label": "Trial Conclusion",
+   "options": "\nSuccess\nFailure"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "label": "Remark"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-27 13:26:22.450676",
+ "modified": "2026-03-06 13:09:12.780005",
  "modified_by": "Administrator",
  "module": "spokes_tekpro_app",
  "name": "Tool Performance",

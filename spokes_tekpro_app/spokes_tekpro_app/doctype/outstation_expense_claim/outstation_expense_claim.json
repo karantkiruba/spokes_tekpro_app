@@ -1,0 +1,357 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-02-27 16:31:55.541314",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "branch",
+  "division",
+  "column_break_4",
+  "company",
+  "month",
+  "year",
+  "posting_date",
+  "section_break_3",
+  "work_place",
+  "region_visited",
+  "hotel_accomadation_limit",
+  "type_of_accommodation",
+  "room_stay",
+  "mode_of_travel",
+  "column_break_8",
+  "lunch_allowance",
+  "start_date",
+  "end_date",
+  "total_hours",
+  "total_days",
+  "days",
+  "total_lunch_allowance",
+  "travel_entry_details_section",
+  "travel_entry",
+  "total_travel_entry_amount",
+  "hotel_expenses_details_section",
+  "hotel_expenses",
+  "total_hotel_expenses",
+  "section_break_31",
+  "food_expenses_entry",
+  "total_food_expenses_entry",
+  "auto_travel_or_others_expenses_section",
+  "auto_travel_or_others_expenses_entry",
+  "total_auto_travel_or_others_expenses_amount",
+  "others_expenses_section",
+  "others_expenses_entry",
+  "total_others_expenses",
+  "section_break_30",
+  "total_amount",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "division",
+   "fieldtype": "Link",
+   "label": "Division",
+   "options": "Division"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "remember_last_selected_value": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Claimed Month",
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "label": "Claimed Year",
+   "options": "Year",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "work_place",
+   "fieldtype": "Data",
+   "label": "Work Place"
+  },
+  {
+   "fieldname": "region_visited",
+   "fieldtype": "Data",
+   "label": "Region Visited"
+  },
+  {
+   "fieldname": "hotel_accomadation_limit",
+   "fieldtype": "Currency",
+   "label": "Hotel Accomadation Limit",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "type_of_accommodation",
+   "fieldtype": "Select",
+   "label": "Type of Accommodation",
+   "options": "Own\nHotel"
+  },
+  {
+   "fieldname": "room_stay",
+   "fieldtype": "Select",
+   "label": "Room Stay",
+   "options": "\nTariff Limit"
+  },
+  {
+   "fieldname": "mode_of_travel",
+   "fieldtype": "Select",
+   "label": "Mode of Travel",
+   "options": "\nCar\nBus\nTrain\nFlight"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lunch_allowance",
+   "fieldtype": "Currency",
+   "label": "Day Allowance",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Datetime",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Datetime",
+   "label": "End Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_hours",
+   "fieldtype": "Float",
+   "label": "Total Hours",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_days",
+   "fieldtype": "Float",
+   "label": "Total Days",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "days",
+   "fieldtype": "Float",
+   "label": "Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_lunch_allowance",
+   "fieldtype": "Currency",
+   "label": "Total Day Allowance",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "travel_entry_details_section",
+   "fieldtype": "Section Break",
+   "label": "Travel Entry Details"
+  },
+  {
+   "fieldname": "travel_entry",
+   "fieldtype": "Table",
+   "label": "Travel Entry",
+   "options": "Travel Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_travel_entry_amount",
+   "fieldtype": "Currency",
+   "label": "Total Travel Entry Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hotel_expenses_details_section",
+   "fieldtype": "Section Break",
+   "label": "Hotel Expenses Details"
+  },
+  {
+   "fieldname": "hotel_expenses",
+   "fieldtype": "Table",
+   "label": "Hotel Expenses",
+   "options": "Hotel Expenses"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_hotel_expenses",
+   "fieldtype": "Currency",
+   "label": "Total Hotel Expenses",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_31",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "food_expenses_entry",
+   "fieldtype": "Table",
+   "label": "Food Expenses Entry",
+   "options": "Food Expenses Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_food_expenses_entry",
+   "fieldtype": "Currency",
+   "label": "Total Food Expenses Entry",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "auto_travel_or_others_expenses_section",
+   "fieldtype": "Section Break",
+   "label": "Auto Travel"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "auto_travel_or_others_expenses_entry",
+   "fieldtype": "Table",
+   "label": "Taxi / Auto",
+   "options": "Auto Travel or Others Expenses Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_auto_travel_or_others_expenses_amount",
+   "fieldtype": "Currency",
+   "label": "Total Taxi / Auto Travel",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "others_expenses_section",
+   "fieldtype": "Section Break",
+   "label": "Others Expenses"
+  },
+  {
+   "fieldname": "others_expenses_entry",
+   "fieldtype": "Table",
+   "label": "Others Expenses Entry",
+   "options": "Others Expenses Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_others_expenses",
+   "fieldtype": "Currency",
+   "label": "Total Others Expenses",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_30",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Outstation Expense Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Outstation Expense Claim",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-06 11:57:40.985462",
+ "modified_by": "Administrator",
+ "module": "spokes_tekpro_app",
+ "name": "Outstation Expense Claim",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
