@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2022-10-18 17:29:01.974194",
+ "creation": "2026-03-06 11:55:59.630661",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -9,41 +9,54 @@
   "naming_series",
   "date",
   "company",
-  "branch",
-  "division",
-  "customer",
-  "customer_name",
-  "contact_person",
   "employee",
   "employee_name",
+  "branch",
+  "division",
+  "visit_to",
+  "customer",
+  "customer_name",
+  "lead",
+  "lead_name",
+  "contact_person",
+  "objective",
   "points_discussed",
   "supports_discussed",
-  "remarks"
+  "remarks",
+  "next_visit_date",
+  "via_mobile_app",
+  "beat_plan"
  ],
  "fields": [
   {
+   "fetch_from": "employee.company",
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company"
   },
   {
+   "depends_on": "eval:doc.visit_to == \"Customer\"",
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
+   "mandatory_depends_on": "eval:doc.visit_to == \"Customer\"",
    "options": "Customer"
   },
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Employee",
    "options": "Employee"
   },
   {
    "fieldname": "points_discussed",
-   "fieldtype": "Table MultiSelect",
+   "fieldtype": "Data",
    "label": "Points Discussed",
-   "options": "Point Discussed Detail"
+   "reqd": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -52,10 +65,10 @@
    "label": "Employee Name"
   },
   {
+   "depends_on": "eval:doc.visit_to == \"Customer\"",
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "Customer Name"
   },
   {
@@ -65,10 +78,10 @@
    "label": "Date"
   },
   {
-   "fetch_from": "customer.customer_primary_contact",
    "fieldname": "contact_person",
-   "fieldtype": "Data",
-   "label": "Contact Person"
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact"
   },
   {
    "fieldname": "remarks",
@@ -77,34 +90,87 @@
   },
   {
    "fieldname": "supports_discussed",
-   "fieldtype": "Table MultiSelect",
-   "label": "Supports Discussed",
-   "options": "Support Discussed Master Detail"
+   "fieldtype": "Data",
+   "label": "Supports Expected"
   },
   {
    "fieldname": "naming_series",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "Naming Series"
   },
   {
+   "fetch_from": "employee.division",
    "fieldname": "division",
    "fieldtype": "Link",
    "label": "Division",
    "options": "Division"
   },
   {
+   "fetch_from": "employee.branch",
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
    "options": "Branch"
+  },
+  {
+   "default": "Customer",
+   "fieldname": "visit_to",
+   "fieldtype": "Link",
+   "label": "Visit To",
+   "options": "DocType",
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.visit_to == \"Lead\"",
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lead",
+   "mandatory_depends_on": "eval:doc.visit_to == \"Lead\"",
+   "options": "Lead"
+  },
+  {
+   "depends_on": "eval:doc.visit_to == \"Lead\"",
+   "fetch_from": "lead.company_name",
+   "fieldname": "lead_name",
+   "fieldtype": "Data",
+   "label": "Lead Name"
+  },
+  {
+   "fieldname": "objective",
+   "fieldtype": "Table MultiSelect",
+   "label": "Objective",
+   "options": "Objective Detail",
+   "reqd": 1
+  },
+  {
+   "fieldname": "next_visit_date",
+   "fieldtype": "Date",
+   "label": "Next Visit Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "via_mobile_app",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Via Mobile App",
+   "read_only": 1
+  },
+  {
+   "fieldname": "beat_plan",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Beat Plan",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-10-21 16:15:24.978572",
+ "modified": "2026-03-06 13:22:10.316876",
  "modified_by": "Administrator",
  "module": "tekpro",
  "name": "Customer Visit",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -120,8 +186,10 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }
